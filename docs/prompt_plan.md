@@ -220,7 +220,7 @@ Replace APP_NAME / module paths if necessary. Use Minitest, no RSpec.
 
 ⸻
 
-Prompt 1 — Bootstrap, quality gates, /up
+Prompt 1 — Bootstrap, quality gates, /up ✅ COMPLETED
 
 You are coding in a fresh Rails 8 app (HTML + Hotwire). Use Minitest. Tasks:
 1) Add Tailwind via rails integration. Add Solid Queue as Active Job adapter.
