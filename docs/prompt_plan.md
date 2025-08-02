@@ -234,7 +234,7 @@ Run all tests. Do not modify unrelated files. Keep changes minimal but productio
 
 ⸻
 
-Prompt 2 — Admin authentication (single admin) + setup task
+Prompt 2 — Admin authentication (single admin) + setup task ✅ COMPLETED
 
 Implement admin authentication using Rails 8 auth generator.
 Requirements:

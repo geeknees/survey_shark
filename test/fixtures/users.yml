@@ -1,0 +1,4 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+# Note: We're using Admin model instead of User model for authentication
+
+# Empty fixtures since we're not using User model
