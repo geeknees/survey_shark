@@ -90,12 +90,10 @@
                   class: "bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50",
                   data: { "chat-composer-target": "submit" } %>
 
-              <%= form_with url: skip_conversation_path(@conversation), method: :post, local: true, class: "inline" do |form| %>
-                <%= form.submit "スキップ",
-                    class: "bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 text-center text-sm" %>
-              <% end %>
             </div>
           </div>
+
+
 
           <!-- Quick Replies -->
           <div class="space-y-2">
@@ -114,6 +112,14 @@
           <div class="text-xs text-gray-500 text-right">
             <span data-chat-composer-target="counter">0</span>/500
           </div>
+        <% end %>
+
+        <!-- Skip Button Form -->
+        <%= form_with url: skip_conversation_path(@conversation),
+            data: { "turbo-method": :post },
+            class: "mt-2" do |skip_form| %>
+          <%= skip_form.submit "スキップ",
+              class: "bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 text-center text-sm" %>
         <% end %>
       </div>
       <% end %>

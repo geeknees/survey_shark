@@ -1,7 +1,9 @@
 <div class="max-w-2xl mx-auto px-4 py-8">
   <div class="bg-white shadow-sm rounded-lg p-8">
-    <div class="text-center mb-8">
+    <div class="text-center">
       <h1 class="text-3xl font-bold text-gray-900 mb-4"><%= @project.name %></h1>
+    </div>
+    <div class="mb-8">
       <% if @project.goal.present? %>
         <p class="text-gray-600 text-lg"><%= simple_format(@project.goal) %></p>
       <% end %>

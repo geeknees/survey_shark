@@ -3,11 +3,13 @@
 - [x] AIからのレスポンスがない
 - [x] ターンが終わっても回答を続けられる（終了しない）
 - [x] OpenAIからのレスポンスが表示されない（There was an exception - NoMethodError(undefined method 'user' for an instance of Session)）
-- [ ] スキップボタンが動かない
+- [x] スキップボタンが動かない
 - [ ] レスポンスががあるまでにローディングアニメーションを表示
 - [ ] プロジェクトの削除ができない
-- [ ] Fix error: No route matches [GET] "/conversations/2/skip"
+- [x] Fix error: No route matches [GET] "/conversations/2/skip"
 - [ ] ナビゲーション用のメニューバーを追加
 - [ ] Adminのパスワード変更機能
 - [ ] 回答リンクをコピーボタンをしたときのインタラクションを追加
 - [ ] 最初に聞く質問はプロジェクト作成時に入力して固定にする
+- [ ] AIが会話を終了したと判定したときには回答を完了する
+- [ ] もう一度回答するボタンから始めると最初の質問が表示されない
