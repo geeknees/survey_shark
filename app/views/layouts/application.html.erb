@@ -23,7 +23,8 @@
   </head>
 
   <body>
-    <main class="container mx-auto mt-28 px-5 flex">
+    <%= render 'shared/navigation' if authenticated? %>
+    <main class="container mx-auto <%= authenticated? ? 'mt-28' : 'mt-16' %> px-5 flex">
       <%= yield %>
     </main>
   </body>
