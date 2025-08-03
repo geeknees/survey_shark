@@ -1,6 +1,7 @@
 Rails.application.routes.draw do
   resources :projects do
     member do
+      get :generate_invite_link
       post :generate_invite_link
     end
 
