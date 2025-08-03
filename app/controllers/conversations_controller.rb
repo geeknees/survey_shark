@@ -5,7 +5,7 @@ class ConversationsController < ApplicationController
   def show
     @messages = @conversation.messages.order(:created_at)
     @user_turn_count = @conversation.messages.where(role: 0).count
-    @max_turns = @conversation.project.limits.dig("max_turns") || 12
+    @max_turns = (@conversation.project.limits.dig("max_turns") || 12).to_i
     @remaining_turns = [ @max_turns - @user_turn_count, 0 ].max
   end
 
