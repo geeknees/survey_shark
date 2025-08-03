@@ -371,7 +371,7 @@ Run tests.
 
 ⸻
 
-Prompt 10 — PII detect+mask (LLM) with Turbo replacement
+Prompt 10 — PII detect+mask (LLM) with Turbo replacement ✅ COMPLETED
 
 Implement PII detection:
 - After each user message creation, enqueue PiiDetectJob with the raw text.
@@ -388,7 +388,7 @@ Run tests.
 
 ⸻
 
-Prompt 11 — AnalyzeConversationJob (finish-only) + Insight board
+Prompt 11 — AnalyzeConversationJob (finish-only) + Insight board ✅ COMPLETED
 
 On conversation completion:
 - AnalyzeConversationJob pipeline: normalize -> tokenize (TinySegmenter) -> RAKE keywords -> LLM summary/theme -> severity auto -> frequency counts -> confidence label (0.7 freq + 0.3 quotes).

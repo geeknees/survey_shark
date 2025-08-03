@@ -31,6 +31,9 @@ class Interview::Orchestrator
       # Check if conversation is complete
       if next_state == "done"
         @conversation.update!(finished_at: Time.current)
+        
+        # Enqueue analysis job for finished conversation
+        AnalyzeConversationJob.perform_later(@conversation.id)
       end
 
       assistant_content

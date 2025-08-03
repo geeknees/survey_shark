@@ -1,0 +1,124 @@
+<div class="max-w-4xl mx-auto p-6">
+  <div class="mb-6">
+    <div class="flex justify-between items-center">
+      <h1 class="text-2xl font-bold text-gray-900"><%= @insight.theme %></h1>
+      <%= link_to "インサイトボードに戻る", project_insights_path(@project), 
+          class: "bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600" %>
+    </div>
+    <p class="text-gray-600 mt-2"><%= @project.name %></p>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Main content -->
+    <div class="lg:col-span-2 space-y-6">
+      <!-- JTBD Section -->
+      <div class="bg-white border border-gray-200 rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-3">Jobs to be Done</h2>
+        <p class="text-gray-700"><%= @insight.jtbds %></p>
+      </div>
+
+      <!-- Evidence Section -->
+      <div class="bg-white border border-gray-200 rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">代表的な発言</h2>
+        <div class="space-y-4">
+          <% @insight.evidence.each_with_index do |quote, index| %>
+            <div class="border-l-4 border-blue-200 pl-4 py-2">
+              <div class="flex justify-between items-start mb-2">
+                <span class="text-sm font-medium text-blue-600">引用 <%= index + 1 %></span>
+              </div>
+              <blockquote class="text-gray-700 italic">
+                "<%= quote %>"
+              </blockquote>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Related Conversations -->
+      <div class="bg-white border border-gray-200 rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">関連する会話</h2>
+        <% if @related_conversations.any? %>
+          <div class="space-y-3">
+            <% @related_conversations.each do |conversation| %>
+              <div class="border border-gray-100 rounded-lg p-3 hover:bg-gray-50">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <div class="text-sm font-medium text-gray-900">
+                      会話 #<%= conversation.id %>
+                    </div>
+                    <div class="text-xs text-gray-500">
+                      <%= conversation.finished_at&.strftime("%Y年%m月%d日 %H:%M") %>
+                    </div>
+                  </div>
+                  <%= link_to "詳細", conversation_path(conversation), 
+                      class: "text-blue-600 hover:text-blue-800 text-sm" %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-gray-500">関連する会話が見つかりませんでした。</p>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-6">
+      <!-- Stats Card -->
+      <div class="bg-white border border-gray-200 rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">統計情報</h3>
+        
+        <div class="space-y-4">
+          <!-- Severity -->
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-sm font-medium text-gray-700">深刻度</span>
+              <span class="text-sm text-gray-500"><%= @insight.severity %>/5</span>
+            </div>
+            <div class="flex">
+              <% 5.times do |i| %>
+                <svg class="h-4 w-4 <%= i < @insight.severity ? 'text-red-500' : 'text-gray-300' %>" 
+                     fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                </svg>
+              <% end %>
+            </div>
+          </div>
+
+          <!-- Frequency -->
+          <div>
+            <div class="text-sm font-medium text-gray-700 mb-2">出現頻度</div>
+            <div class="grid grid-cols-2 gap-3">
+              <div class="text-center">
+                <div class="text-xl font-bold text-blue-600"><%= @insight.freq_conversations %></div>
+                <div class="text-xs text-gray-500">会話</div>
+              </div>
+              <div class="text-center">
+                <div class="text-xl font-bold text-green-600"><%= @insight.freq_messages %></div>
+                <div class="text-xs text-gray-500">発言</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Confidence -->
+          <div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm font-medium text-gray-700">信頼度</span>
+              <span class="text-lg font-bold text-purple-600"><%= @insight.confidence_label %></span>
+            </div>
+            <div class="text-xs text-gray-500 mt-1">
+              <% case @insight.confidence_label %>
+              <% when "H" %>
+                高信頼度 - 十分なデータに基づく
+              <% when "M" %>
+                中信頼度 - ある程度のデータに基づく
+              <% else %>
+                低信頼度 - 限定的なデータに基づく
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,32 @@
+<div class="max-w-6xl mx-auto p-6">
+  <div class="mb-6">
+    <div class="flex justify-between items-center">
+      <h1 class="text-2xl font-bold text-gray-900">インサイトボード</h1>
+      <%= link_to "プロジェクトに戻る", project_path(@project), 
+          class: "bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600" %>
+    </div>
+    <p class="text-gray-600 mt-2">
+      <%= @project.name %> - 頻度順トップ5テーマ（総会話数: <%= @total_conversations %>）
+    </p>
+  </div>
+
+  <% if @insights.any? %>
+    <div class="grid gap-6">
+      <% @insights.each_with_index do |insight, index| %>
+        <%= render "insight_card", insight: insight, rank: index + 1 %>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
+      <div class="text-gray-500">
+        <svg class="mx-auto h-12 w-12 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">まだインサイトがありません</h3>
+        <p class="text-gray-600">
+          会話が完了すると、自動的にインサイトが生成されます。
+        </p>
+      </div>
+    </div>
+  <% end %>
+</div>

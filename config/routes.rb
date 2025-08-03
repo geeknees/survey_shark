@@ -3,6 +3,8 @@ Rails.application.routes.draw do
     member do
       post :generate_invite_link
     end
+    
+    resources :insights, only: [:index, :show]
   end
   resource :session
   resources :passwords, param: :token

@@ -39,6 +39,9 @@ class Interview::FallbackOrchestrator
         state: "done",
         finished_at: Time.current
       )
+      
+      # Enqueue analysis job for finished conversation
+      AnalyzeConversationJob.perform_later(@conversation.id)
     end
 
     assistant_content
