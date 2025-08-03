@@ -21,9 +21,9 @@ class StreamAssistantResponseJob < ApplicationJob
     rescue LLM::Client::OpenAI::OpenAIError => e
       Rails.logger.error "LLM error in streaming job, falling back: #{e.message}"
 
-      # Fall back to regular orchestrator
-      orchestrator = Interview::Orchestrator.new(conversation)
-      response = orchestrator.process_user_message(user_message)
+      # Fall back to fallback orchestrator
+      fallback_orchestrator = Interview::FallbackOrchestrator.new(conversation)
+      response = fallback_orchestrator.process_user_message(user_message)
       broadcast_complete_response(conversation, response)
     end
   end

@@ -49,9 +49,13 @@ module Interview
       end
 
       assistant_content
+    rescue LLM::Client::OpenAI::OpenAIError => e
+      Rails.logger.error "LLM error, switching to fallback mode: #{e.message}"
+      # Switch to fallback mode for OpenAI errors even in test environment
+      Interview::FallbackOrchestrator.new(@conversation).process_user_message(user_message)
     rescue => e
       if Rails.env.test?
-        raise e  # Re-raise in test environment for debugging
+        raise e  # Re-raise other exceptions in test environment for debugging
       else
         Rails.logger.error "LLM error, switching to fallback mode: #{e.message}"
         # Switch to fallback mode
@@ -64,7 +68,6 @@ module Interview
 
   def determine_next_state(user_message)
     current_state = @conversation.state
-    user_turn_count = @conversation.messages.where(role: 0).count
     max_deep = @project.limits.dig("max_deep") || 2
 
     case current_state
