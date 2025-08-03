@@ -61,7 +61,7 @@ class AnalyzeConversationJobTest < ActiveJob::TestCase
     # Mock analyzer to raise error
     mock_analyzer = Minitest::Mock.new
     mock_analyzer.expect(:analyze, nil) { raise "Analysis error" }
-    
+
     Analysis::ConversationAnalyzer.stub(:new, mock_analyzer) do
       assert_nothing_raised do
         AnalyzeConversationJob.perform_now(@conversation.id)
