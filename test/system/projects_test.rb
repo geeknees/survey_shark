@@ -79,13 +79,4 @@ class ProjectsTest < ApplicationSystemTestCase
     assert_not closed_project.active?
     assert closed_project.closed?
   end
-
-  private
-
-  def sign_in_as(admin)
-    visit new_session_path
-    fill_in "email_address", with: admin.email_address
-    fill_in "password", with: "password123"
-    click_on "Sign in"
-  end
 end

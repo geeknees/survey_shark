@@ -93,12 +93,4 @@ class InvitesTest < ApplicationSystemTestCase
     assert_no_button "同意して開始"
   end
 
-  private
-
-  def sign_in_as(admin)
-    visit new_session_path
-    fill_in "email_address", with: admin.email_address
-    fill_in "password", with: "password123"
-    click_on "Sign in"
-  end
 end

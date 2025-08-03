@@ -1,5 +1,4 @@
 require "application_system_test_case"
-require "webmock/minitest"
 
 class FallbackModeTest < ApplicationSystemTestCase
   def setup
@@ -7,11 +6,11 @@ class FallbackModeTest < ApplicationSystemTestCase
     @participant = participants(:one)
     @conversation = conversations(:one)
     @conversation.update!(state: "intro")
-    WebMock.enable!
+    enable_webmock_with_system_test_support
   end
 
   def teardown
-    WebMock.disable!
+    disable_webmock
   end
 
   test "conversation switches to fallback mode on LLM error" do
