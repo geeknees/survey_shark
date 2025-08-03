@@ -42,7 +42,7 @@ class InvitesController < ApplicationController
       # Redirect to chat page
       redirect_to conversation_path(@conversation)
     else
-      render :attributes, status: :unprocessable_entity
+      render :attributes, status: :unprocessable_content
     end
   end
 

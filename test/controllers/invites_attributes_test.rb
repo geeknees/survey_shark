@@ -54,7 +54,7 @@ class InvitesAttributesTest < ActionDispatch::IntegrationTest
         participant: { age: 150 }
       }
     end
-    assert_response :unprocessable_entity
+    assert_response :unprocessable_content
     assert_select ".text-red-700", /Age/
   end
 
@@ -64,7 +64,7 @@ class InvitesAttributesTest < ActionDispatch::IntegrationTest
         participant: { age: -5 }
       }
     end
-    assert_response :unprocessable_entity
+    assert_response :unprocessable_content
   end
 
   test "should create participant with custom attributes" do
@@ -112,7 +112,7 @@ class InvitesAttributesTest < ActionDispatch::IntegrationTest
   #       }
   #     }
   #   end
-  #   assert_response :unprocessable_entity
+  #   assert_response :unprocessable_content
   #   assert_select ".text-red-700", /部署は必須項目です/
   # end
 
