@@ -16,8 +16,35 @@ class InvitesController < ApplicationController
       @project.update!(status: 'closed')
     end
     
-    # For now, redirect to a placeholder (will be attributes page in next prompt)
-    redirect_to invite_path(@invite_link.token), notice: "Started! (Attributes page coming in next prompt)"
+    # Redirect to attributes form
+    redirect_to invite_attributes_path(@invite_link.token)
+  end
+
+  def attributes
+    # Show attributes form
+  end
+
+  def create_participant
+    # Create participant and conversation, then redirect to chat
+    @participant = @project.participants.build(participant_params)
+    @participant.anon_hash = generate_anon_hash
+    
+    if @participant.save
+      # Create conversation
+      @conversation = @project.conversations.create!(
+        participant: @participant,
+        state: "intro",
+        started_at: Time.current,
+        ip: request.remote_ip,
+        user_agent: request.user_agent
+      )
+      
+      # For now, redirect back with success (chat page will come in next prompt)
+      redirect_to invite_attributes_path(@invite_link.token), 
+                  notice: "属性情報を保存しました。チャット画面は次のプロンプトで実装されます。"
+    else
+      render :attributes, status: :unprocessable_entity
+    end
   end
 
   private
@@ -46,5 +73,21 @@ class InvitesController < ApplicationController
 
   def render_not_found
     render 'not_found', status: :not_found
+  end
+
+  def participant_params
+    permitted = params.require(:participant).permit(:age, custom_attributes: {})
+    
+    # Clean up custom attributes - remove empty values
+    if permitted[:custom_attributes]
+      permitted[:custom_attributes] = permitted[:custom_attributes].reject { |k, v| v.blank? }
+    end
+    
+    permitted
+  end
+
+  def generate_anon_hash
+    # Generate a simple anonymous hash based on timestamp and random data
+    Digest::SHA256.hexdigest("#{Time.current.to_f}-#{SecureRandom.hex(8)}")[0..15]
   end
 end

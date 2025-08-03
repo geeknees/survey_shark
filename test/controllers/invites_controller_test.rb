@@ -52,7 +52,7 @@ class InvitesControllerTest < ActionDispatch::IntegrationTest
     assert_difference('@project.reload.responses_count', 1) do
       post invite_start_path(@invite_link.token)
     end
-    assert_redirected_to invite_path(@invite_link.token)
+    assert_redirected_to invite_attributes_path(@invite_link.token)
   end
 
   test "should return 404 for invalid token" do

@@ -306,7 +306,7 @@ Run tests.
 
 ⸻
 
-Prompt 6 — Consent + Attributes form
+Prompt 6 — Consent + Attributes form ✅ COMPLETED
 
 Build the attributes step:
 - Form after consent: Age (integer, 0..120, optional), plus 0..N custom short-text attributes (from project config; MVP supports label + help + required).

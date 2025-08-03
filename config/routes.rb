@@ -10,6 +10,8 @@ Rails.application.routes.draw do
   # Public invite link route
   get "i/:token", to: "invites#show", as: :invite
   post "i/:token/start", to: "invites#start", as: :invite_start
+  get "i/:token/attributes", to: "invites#attributes", as: :invite_attributes
+  post "i/:token/create_participant", to: "invites#create_participant", as: :invite_create_participant
   
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

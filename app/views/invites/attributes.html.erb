@@ -1,0 +1,77 @@
+<div class="max-w-2xl mx-auto px-4 py-8">
+  <div class="bg-white shadow-sm rounded-lg p-8">
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 mb-4">基本情報の入力</h1>
+      <p class="text-gray-600">アンケートを開始する前に、いくつかの基本情報をお聞かせください。</p>
+    </div>
+
+    <%= form_with model: Participant.new, 
+                  url: invite_create_participant_path(@invite_link.token), 
+                  local: true, 
+                  class: "space-y-6" do |form| %>
+      
+      <% if @participant&.errors&.any? %>
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+          <h3 class="text-sm font-medium text-red-800 mb-2">
+            <%= pluralize(@participant.errors.count, "error") %> prohibited saving:
+          </h3>
+          <ul class="text-sm text-red-700 list-disc list-inside">
+            <% @participant.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <!-- Age Field -->
+      <div>
+        <%= form.label :age, "年齢", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= form.number_field :age, 
+            min: 0, max: 120, 
+            placeholder: "例: 25", 
+            class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
+        <p class="text-xs text-gray-500 mt-1">任意入力です（0-120歳）</p>
+      </div>
+
+      <!-- Custom Attributes -->
+      <% if @project.custom_attributes.present? %>
+        <div class="space-y-4">
+          <h3 class="text-lg font-medium text-gray-900">追加情報</h3>
+          
+          <% @project.custom_attributes.each_with_index do |attr, index| %>
+            <div>
+              <%= label_tag "participant[custom_attributes][#{attr['key']}]", 
+                  attr['label'], 
+                  class: "block text-sm font-medium text-gray-700 mb-1" %>
+              
+              <%= text_field_tag "participant[custom_attributes][#{attr['key']}]", 
+                  params.dig(:participant, :custom_attributes, attr['key']), 
+                  placeholder: attr['placeholder'] || "入力してください",
+                  required: attr['required'],
+                  class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" %>
+              
+              <% if attr['help'].present? %>
+                <p class="text-xs text-gray-500 mt-1"><%= attr['help'] %></p>
+              <% end %>
+              
+              <% if attr['required'] %>
+                <p class="text-xs text-red-600 mt-1">※必須項目</p>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+
+      <div class="pt-6">
+        <%= form.submit "アンケートを開始", 
+            class: "w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg text-lg transition-colors cursor-pointer" %>
+      </div>
+    <% end %>
+
+    <div class="text-center mt-6">
+      <p class="text-sm text-gray-500">
+        入力いただいた情報は匿名で処理され、研究目的のみに使用されます。
+      </p>
+    </div>
+  </div>
+</div>
