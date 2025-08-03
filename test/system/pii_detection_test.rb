@@ -5,9 +5,28 @@ class PiiDetectionTest < ApplicationSystemTestCase
     @project = projects(:one)
     @participant = participants(:one)
     @conversation = conversations(:one)
+    enable_webmock_with_system_test_support
+  end
+
+  def teardown
+    disable_webmock
   end
 
   test "PII is detected and masked in real time" do
+    # Mock OpenAI responses
+    stub_request(:post, "https://api.openai.com/v1/chat/completions")
+      .to_return(
+        status: 200,
+        body: {
+          choices: [ {
+            message: {
+              content: "ありがとうございます。詳しく教えてください。"
+            }
+          } ]
+        }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+
     visit conversation_path(@conversation)
 
     # Post a message with PII
@@ -35,6 +54,20 @@ class PiiDetectionTest < ApplicationSystemTestCase
   end
 
   test "messages without PII are not modified" do
+    # Mock OpenAI responses
+    stub_request(:post, "https://api.openai.com/v1/chat/completions")
+      .to_return(
+        status: 200,
+        body: {
+          choices: [ {
+            message: {
+              content: "なるほど、お仕事が大変なのですね。他にも何か課題はありますか？"
+            }
+          } ]
+        }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+
     visit conversation_path(@conversation)
 
     # Post a message without PII
@@ -59,6 +92,20 @@ class PiiDetectionTest < ApplicationSystemTestCase
   end
 
   test "skip messages are not processed for PII" do
+    # Mock OpenAI responses
+    stub_request(:post, "https://api.openai.com/v1/chat/completions")
+      .to_return(
+        status: 200,
+        body: {
+          choices: [ {
+            message: {
+              content: "他にも何か課題や不便に感じていることはありますか？"
+            }
+          } ]
+        }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+
     visit conversation_path(@conversation)
 
     # Click skip button
@@ -78,6 +125,20 @@ class PiiDetectionTest < ApplicationSystemTestCase
   end
 
   test "multiple PII types are detected and masked" do
+    # Mock OpenAI responses
+    stub_request(:post, "https://api.openai.com/v1/chat/completions")
+      .to_return(
+        status: 200,
+        body: {
+          choices: [ {
+            message: {
+              content: "ご協力ありがとうございます。他にも何かありますか？"
+            }
+          } ]
+        }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+
     visit conversation_path(@conversation)
 
     # Post a message with multiple PII types
@@ -105,6 +166,20 @@ class PiiDetectionTest < ApplicationSystemTestCase
   end
 
   test "PII detection works with company and school names" do
+    # Mock OpenAI responses
+    stub_request(:post, "https://api.openai.com/v1/chat/completions")
+      .to_return(
+        status: 200,
+        body: {
+          choices: [ {
+            message: {
+              content: "ありがとうございます。他にも何かお聞かせください。"
+            }
+          } ]
+        }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+
     visit conversation_path(@conversation)
 
     # Post a message with company and school names
@@ -140,6 +215,20 @@ class PiiDetectionTest < ApplicationSystemTestCase
   end
 
   test "conversation continues normally after PII detection" do
+    # Mock OpenAI responses
+    stub_request(:post, "https://api.openai.com/v1/chat/completions")
+      .to_return(
+        status: 200,
+        body: {
+          choices: [ {
+            message: {
+              content: "ありがとうございます。他にも何かありますか？"
+            }
+          } ]
+        }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      ).times(2) # Two API calls for two messages
+
     visit conversation_path(@conversation)
 
     # Post a message with PII

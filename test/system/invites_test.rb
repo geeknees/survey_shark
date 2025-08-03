@@ -50,8 +50,8 @@ class InvitesTest < ApplicationSystemTestCase
 
     click_on "同意して開始"
 
-    # Should redirect back with success message (attributes page will come in next prompt)
-    assert_text "Started! (Attributes page coming in next prompt)"
+    # Should redirect to attributes page
+    assert_text "基本情報の入力"
 
     # Check that counter was incremented
     @project.reload

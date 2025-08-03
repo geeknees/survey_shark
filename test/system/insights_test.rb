@@ -99,7 +99,7 @@ class InsightsTest < ApplicationSystemTestCase
     sign_in_as @admin
 
     # Create a new project without insights to test empty state
-    empty_project = Project.create!(name: "Empty Project", description: "Test project with no insights")
+    empty_project = Project.create!(name: "Empty Project", goal: "Test project with no insights")
 
     visit project_insights_path(empty_project)
 

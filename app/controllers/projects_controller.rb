@@ -59,13 +59,13 @@ class ProjectsController < ApplicationController
     # Convert text fields to arrays
     if permitted[:must_ask_text].present?
       permitted[:must_ask] = permitted[:must_ask_text].split("\n").map(&:strip).reject(&:blank?)
-      permitted.delete(:must_ask_text)
     end
+    permitted.delete(:must_ask_text) if permitted.key?(:must_ask_text)
 
     if permitted[:never_ask_text].present?
       permitted[:never_ask] = permitted[:never_ask_text].split("\n").map(&:strip).reject(&:blank?)
-      permitted.delete(:never_ask_text)
     end
+    permitted.delete(:never_ask_text) if permitted.key?(:never_ask_text)
 
     permitted
   end

@@ -72,10 +72,17 @@ class ChatTest < ApplicationSystemTestCase
   test "empty message cannot be submitted" do
     visit conversation_path(@conversation)
 
-    # Try to submit without typing anything
-    click_button "送信"
+    # Submit button should be disabled when textarea is empty
+    submit_button = find("input[type='submit'][value='送信']")
+    assert submit_button[:disabled], "Submit button should be disabled when textarea is empty"
 
-    # Should stay on the same page (no message created)
-    assert_current_path conversation_path(@conversation)
+    # Fill in some text to enable the button
+    fill_in "content", with: "Test message"
+    
+    # Clear the text to disable it again 
+    fill_in "content", with: ""
+    
+    # Submit button should be disabled again
+    assert submit_button[:disabled], "Submit button should be disabled when textarea is cleared"
   end
 end

@@ -93,7 +93,7 @@ class ProjectLimitsAndKpisTest < ApplicationSystemTestCase
 
     # Should see thank you message
     assert_text "ご協力ありがとうございました"
-    assert_text "回答は無事に送信されました"
+    assert_text "貴重なご意見をいただき、誠にありがとうございました"
 
     # Should see restart button (project not at limit)
     assert_button "もう一度回答する"

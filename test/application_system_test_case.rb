@@ -7,6 +7,8 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
 
   def setup
     super
+    # Set OpenAI API key for tests
+    ENV["OPENAI_API_KEY"] = "test-api-key"
     # Disable WebMock for system tests to avoid conflicts with Selenium
     if defined?(WebMock)
       WebMock.disable!
@@ -18,6 +20,9 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     fill_in "email_address", with: admin.email_address
     fill_in "password", with: "password123"
     click_button "Sign in"
+
+    # Debug: ensure we're not on the login page anymore
+    assert_no_current_path new_session_path, wait: 5
   end
 
   # Helper method for system tests that need WebMock

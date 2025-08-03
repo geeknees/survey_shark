@@ -6,9 +6,28 @@ class OrchestratorIntegrationTest < ApplicationSystemTestCase
     @participant = participants(:one)
     @conversation = conversations(:one)
     @conversation.update!(state: "intro")
+    enable_webmock_with_system_test_support
+  end
+
+  def teardown
+    disable_webmock
   end
 
   test "complete conversation flow without OpenAI" do
+    # Mock OpenAI responses
+    stub_request(:post, "https://api.openai.com/v1/chat/completions")
+      .to_return(
+        status: 200,
+        body: {
+          choices: [ {
+            message: {
+              content: "それは大変ですね。他にも何か困っていることはありますか？"
+            }
+          } ]
+        }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      ).times(10) # Multiple responses for the conversation
+
     visit conversation_path(@conversation)
 
     # Initial state - intro

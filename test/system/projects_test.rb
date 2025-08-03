@@ -17,7 +17,7 @@ class ProjectsTest < ApplicationSystemTestCase
     fill_in "project[never_ask_text]", with: "Personal information\nSalary details"
     select "Polite Soft", from: "Tone"
     select "Active", from: "Status"
-    fill_in "Max Responses", with: "100"
+    fill_in "project_max_responses", with: "100"
     fill_in "project[limits][max_turns]", with: "15"
     fill_in "project[limits][max_deep]", with: "3"
 
@@ -43,7 +43,9 @@ class ProjectsTest < ApplicationSystemTestCase
       name: "Original Project",
       goal: "Original goal",
       status: "draft",
-      max_responses: 50
+      max_responses: 50,
+      must_ask: [],
+      never_ask: []
     )
 
     visit project_path(project)
@@ -52,7 +54,7 @@ class ProjectsTest < ApplicationSystemTestCase
     fill_in "Name", with: "Updated Project Name"
     fill_in "Goal/Description", with: "Updated project goal"
     select "Active", from: "Status"
-    fill_in "Max Responses", with: "75"
+    fill_in "project_max_responses", with: "75"
 
     click_on "Update Project"
 
