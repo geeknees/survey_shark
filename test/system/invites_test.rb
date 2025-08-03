@@ -61,11 +61,15 @@ class InvitesTest < ApplicationSystemTestCase
   test "project auto-closes when max responses reached" do
     invite_link = @project.invite_links.create!
     @project.update!(responses_count: 1) # One response already
+    @project.reload # Ensure the update is reflected
 
     puts "Before start: responses_count=#{@project.responses_count}, status=#{@project.status}"
 
     visit invite_path(invite_link.token)
     click_on "同意して開始"
+
+    # Wait for redirect to complete
+    sleep 1
 
     # Project should now be closed
     @project.reload

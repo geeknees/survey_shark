@@ -32,6 +32,9 @@ class FallbackModeTest < ApplicationSystemTestCase
       fill_in "content", with: "I have computer problems"
       click_button "送信"
 
+      # Wait for the page to update after form submission
+      assert_text "I have computer problems", wait: 5
+
       # Manually execute the job to trigger the error handling
       @conversation.reload
       user_message = @conversation.messages.where(role: 0).last
@@ -39,9 +42,8 @@ class FallbackModeTest < ApplicationSystemTestCase
       if user_message
         StreamAssistantResponseJob.perform_now(@conversation.id, user_message.id)
 
-        # Should see the user message
+        # Refresh page to see the new assistant message
         visit current_path
-        assert_text "I have computer problems"
 
         # Verify conversation switched to fallback mode
         @conversation.reload
@@ -58,6 +60,9 @@ class FallbackModeTest < ApplicationSystemTestCase
       fill_in "content", with: "My computer is very slow"
       click_button "送信"
 
+      # Wait for the page to update after form submission
+      assert_text "My computer is very slow", wait: 5
+
       @conversation.reload
       user_message = @conversation.messages.where(role: 0).last
       StreamAssistantResponseJob.perform_now(@conversation.id, user_message.id)
@@ -71,6 +76,9 @@ class FallbackModeTest < ApplicationSystemTestCase
       fill_in "content", with: "The slowness is most important because it affects my work"
       click_button "送信"
 
+      # Wait for the page to update after form submission
+      assert_text "The slowness is most important because it affects my work", wait: 5
+
       @conversation.reload
       user_message = @conversation.messages.where(role: 0).last
       StreamAssistantResponseJob.perform_now(@conversation.id, user_message.id)
@@ -83,6 +91,9 @@ class FallbackModeTest < ApplicationSystemTestCase
       # Final response
       fill_in "content", with: "I think we need better computers"
       click_button "送信"
+
+      # Wait for the page to update after form submission
+      assert_text "I think we need better computers", wait: 5
 
       @conversation.reload
       user_message = @conversation.messages.where(role: 0).last
@@ -111,6 +122,9 @@ class FallbackModeTest < ApplicationSystemTestCase
     fill_in "content", with: "Response to question 1"
     click_button "送信"
 
+    # Wait for the page to update after form submission
+    assert_text "Response to question 1", wait: 5
+
     # Manually execute the job since perform_enqueued_jobs doesn't work reliably in system tests
     @conversation.reload
     user_message = @conversation.messages.where(role: 0).last
@@ -129,6 +143,9 @@ class FallbackModeTest < ApplicationSystemTestCase
     fill_in "content", with: "Response to question 2"
     click_button "送信"
 
+    # Wait for the page to update after form submission
+    assert_text "Response to question 2", wait: 5
+
     @conversation.reload
     user_message = @conversation.messages.where(role: 0).last
     StreamAssistantResponseJob.perform_now(@conversation.id, user_message.id)
@@ -140,6 +157,9 @@ class FallbackModeTest < ApplicationSystemTestCase
     fill_in "content", with: "Response to question 3"
     click_button "送信"
 
+    # Wait for the page to update after form submission
+    assert_text "Response to question 3", wait: 5
+
     @conversation.reload
     user_message = @conversation.messages.where(role: 0).last
     StreamAssistantResponseJob.perform_now(@conversation.id, user_message.id)
@@ -150,6 +170,9 @@ class FallbackModeTest < ApplicationSystemTestCase
     # Final response that completes the conversation
     fill_in "content", with: "Response to final question"
     click_button "送信"
+
+    # Wait for the page to update after form submission
+    assert_text "Response to final question", wait: 5
 
     @conversation.reload
     user_message = @conversation.messages.where(role: 0).last
