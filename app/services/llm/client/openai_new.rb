@@ -18,7 +18,6 @@ module LLM
       def generate_response(system_prompt:, behavior_prompt:, conversation_history:, user_message:)
         messages = build_messages(system_prompt, behavior_prompt, conversation_history, user_message)
 
-        retry_count = 0
         begin
           response = @client.chat(
             parameters: {
@@ -31,24 +30,9 @@ module LLM
 
           content = response.dig("choices", 0, "message", "content") || ""
           truncate_response(content)
-        rescue ::OpenAI::Error => e
-          Rails.logger.error "OpenAI API error: #{e.message}"
-          if retry_count < 1
-            retry_count += 1
-            Rails.logger.info "Retrying OpenAI request (attempt #{retry_count + 1})"
-            sleep(1)
-            retry
-          end
-          raise OpenAIError.new("API error after retry: #{e.message}")
         rescue => e
           Rails.logger.error "OpenAI API error: #{e.message}"
-          if retry_count < 1
-            retry_count += 1
-            Rails.logger.info "Retrying OpenAI request (attempt #{retry_count + 1})"
-            sleep(2)
-            retry
-          end
-          raise OpenAIError.new("API error after retry: #{e.message}")
+          raise OpenAIError.new("API error: #{e.message}")
         end
       end
 
@@ -71,9 +55,6 @@ module LLM
 
             content = response.dig("choices", 0, "message", "content") || ""
             truncate_response(content)
-          rescue ::OpenAI::Error => e
-            Rails.logger.error "OpenAI API error: #{e.message}"
-            raise OpenAIError.new("API error: #{e.message}")
           rescue => e
             Rails.logger.error "OpenAI API error: #{e.message}"
             raise OpenAIError.new("API error: #{e.message}")
@@ -123,7 +104,6 @@ module LLM
               temperature: @temperature,
               max_tokens: 500,
               stream: proc do |chunk, _bytesize|
-                # ruby-openai returns parsed data directly
                 delta = chunk.dig("choices", 0, "delta", "content")
 
                 if delta
@@ -155,13 +135,9 @@ module LLM
               }
             )
             content = response.dig("choices", 0, "message", "content") || ""
-            accumulated_content = content
-            yield(truncate_response(content)) if block_given?
-          rescue ::OpenAI::Error => e
-            Rails.logger.error "OpenAI API error in fallback: #{e.message}" if defined?(Rails)
-            raise OpenAIError.new("API error: #{e.message}")
+            yield(truncate_response(content))
           rescue => e
-            Rails.logger.error "OpenAI API error in fallback: #{e.message}" if defined?(Rails)
+            Rails.logger.error "OpenAI API error in fallback: #{e.message}"
             raise OpenAIError.new("API error: #{e.message}")
           end
         end
