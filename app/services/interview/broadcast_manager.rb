@@ -54,14 +54,15 @@ module Interview
     private
 
     def broadcast_form_reset
-      # Broadcast custom script to reset form
+      # Use a more reliable approach: broadcast a custom Turbo Stream action
+      Rails.logger.info "Broadcasting form reset event"
+
+      # Use a span element that triggers a custom event when added to DOM
       Turbo::StreamsChannel.broadcast_action_to(
         @conversation,
         action: "append",
         target: "messages",
-        html: "<script>
-          document.dispatchEvent(new CustomEvent('chat:response-complete'));
-        </script>".html_safe
+        html: "<span id='form-reset-#{Time.current.to_i}' data-form-reset='true' style='display: none;'></span>".html_safe
       )
     end
 

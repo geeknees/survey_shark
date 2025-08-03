@@ -4,14 +4,14 @@ export default class extends Controller {
   static targets = ['form', 'textarea', 'submit', 'counter', 'loading']
 
   connect() {
+    console.log('chat-composer controller connected')
     this.updateCounter()
     this.updateSubmitButton()
     this.isSubmitting = false
-    this.reconnectAttempts = 0
-    this.maxReconnectAttempts = 5
 
     // Listen for response complete events
     this.responseCompleteHandler = () => {
+      console.log('chat:response-complete event received, resetting form')
       this.resetForm()
     }
     document.addEventListener(
@@ -19,23 +19,8 @@ export default class extends Controller {
       this.responseCompleteHandler
     )
 
-    // Listen for Turbo Stream connection events
-    this.connectionLostHandler = () => {
-      this.handleConnectionLoss()
-    }
-    this.connectionRestoredHandler = () => {
-      this.handleConnectionRestored()
-    }
-
-    document.addEventListener(
-      'turbo:before-stream-render',
-      this.connectionRestoredHandler
-    )
-
-    // Set up periodic connection check
-    this.connectionCheckInterval = setInterval(() => {
-      this.checkConnection()
-    }, 30000) // Check every 30 seconds
+    // Set up observer to watch for form reset signals
+    this.setupFormResetObserver()
   }
 
   disconnect() {
@@ -43,13 +28,9 @@ export default class extends Controller {
       'chat:response-complete',
       this.responseCompleteHandler
     )
-    document.removeEventListener(
-      'turbo:before-stream-render',
-      this.connectionRestoredHandler
-    )
 
-    if (this.connectionCheckInterval) {
-      clearInterval(this.connectionCheckInterval)
+    if (this.formResetObserver) {
+      this.formResetObserver.disconnect()
     }
   }
 
@@ -63,9 +44,13 @@ export default class extends Controller {
       if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault()
         if (this.canSubmit() && !this.isSubmitting) {
-          this.showLoading()
-          this.isSubmitting = true
-          this.formTarget.requestSubmit()
+          console.log('Enter key pressed, submitting form')
+          // Create a synthetic submit event to trigger handleSubmit
+          const submitEvent = new Event('submit', {
+            bubbles: true,
+            cancelable: true
+          })
+          this.formTarget.dispatchEvent(submitEvent)
         }
       }
     })
@@ -89,7 +74,7 @@ export default class extends Controller {
     this.submissionTimeout = setTimeout(() => {
       console.warn('Submission timeout, resetting form state')
       this.resetForm()
-    }, 30000) // 30 second timeout
+    }, 10000) // 10 second timeout (reduced from 30)
 
     this.formTarget.requestSubmit()
   }
@@ -100,15 +85,17 @@ export default class extends Controller {
       return
     }
 
-    // Additional check for connection before submitting (skip in test environment)
-    if (!this.isTestEnvironment() && !this.isConnected()) {
-      event.preventDefault()
-      this.showConnectionError()
-      return
-    }
-
+    console.log('Form submitted, showing loading state')
     this.showLoading()
     this.isSubmitting = true
+
+    // Fallback: Reset form after 15 seconds if no other reset occurs
+    this.fallbackResetTimeout = setTimeout(() => {
+      if (this.isSubmitting) {
+        console.log('Fallback timeout reached, resetting form')
+        this.resetForm()
+      }
+    }, 15000)
   }
 
   insertQuickReply(event) {
@@ -127,6 +114,9 @@ export default class extends Controller {
   }
 
   hideLoading() {
+    console.log(
+      'hideLoading called, hiding loading indicator and enabling submit button'
+    )
     if (this.hasLoadingTarget) {
       this.loadingTarget.classList.add('hidden')
     }
@@ -136,6 +126,7 @@ export default class extends Controller {
 
   // Called when new message is added to reset form
   resetForm() {
+    console.log('resetForm called, hiding loading and clearing textarea')
     this.textareaTarget.value = ''
     this.updateCounter()
     this.hideLoading()
@@ -145,73 +136,11 @@ export default class extends Controller {
       clearTimeout(this.submissionTimeout)
       this.submissionTimeout = null
     }
-  }
 
-  handleConnectionLoss() {
-    console.warn('Connection lost, disabling form')
-    this.showConnectionError()
-  }
-
-  handleConnectionRestored() {
-    console.log('Connection restored')
-    this.hideConnectionError()
-    this.reconnectAttempts = 0
-  }
-
-  checkConnection() {
-    // Simple check by attempting to access ActionCable connection
-    if (
-      window.App &&
-      window.App.cable &&
-      window.App.cable.connection.isOpen()
-    ) {
-      this.handleConnectionRestored()
-    } else if (this.reconnectAttempts < this.maxReconnectAttempts) {
-      this.attemptReconnection()
-    }
-  }
-
-  attemptReconnection() {
-    this.reconnectAttempts++
-    console.log(
-      `Attempting reconnection ${this.reconnectAttempts}/${this.maxReconnectAttempts}`
-    )
-
-    // Force reconnection if ActionCable is available
-    if (window.App && window.App.cable) {
-      window.App.cable.connection.open()
-    }
-  }
-
-  isConnected() {
-    return (
-      window.App && window.App.cable && window.App.cable.connection.isOpen()
-    )
-  }
-
-  isTestEnvironment() {
-    // Simple heuristic to detect test environment
-    return (
-      window.navigator.userAgent.includes('HeadlessChrome') ||
-      window.location.hostname.includes('127.0.0.1') ||
-      !window.App ||
-      !window.App.cable
-    )
-  }
-
-  showConnectionError() {
-    // Add a visual indicator for connection issues
-    if (this.hasSubmitTarget) {
-      this.submitTarget.textContent = '接続を確認中...'
-      this.submitTarget.disabled = true
-    }
-  }
-
-  hideConnectionError() {
-    // Restore normal submit button state
-    if (this.hasSubmitTarget) {
-      this.submitTarget.textContent = '送信'
-      this.updateSubmitButton()
+    // Clear the fallback reset timeout if it exists
+    if (this.fallbackResetTimeout) {
+      clearTimeout(this.fallbackResetTimeout)
+      this.fallbackResetTimeout = null
     }
   }
 
@@ -246,5 +175,44 @@ export default class extends Controller {
   canSubmit() {
     const content = this.textareaTarget.value.trim()
     return content.length > 0 && content.length <= 500
+  }
+
+  setupFormResetObserver() {
+    // Watch for form reset signals in the messages container
+    const messagesContainer = document.getElementById('messages')
+    if (!messagesContainer) {
+      console.warn(
+        'Messages container not found, cannot set up form reset observer'
+      )
+      return
+    }
+
+    this.formResetObserver = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            // Check if this node or any child has the form-reset data attribute
+            const resetElement =
+              node.hasAttribute && node.hasAttribute('data-form-reset')
+                ? node
+                : node.querySelector &&
+                  node.querySelector('[data-form-reset="true"]')
+
+            if (resetElement && this.isSubmitting) {
+              console.log('Form reset signal detected, resetting form')
+              this.resetForm()
+              resetElement.remove() // Clean up the signal element
+            }
+          }
+        })
+      })
+    })
+
+    this.formResetObserver.observe(messagesContainer, {
+      childList: true,
+      subtree: true
+    })
+
+    console.log('Form reset observer set up successfully')
   }
 }
