@@ -7,7 +7,7 @@
       <p class="text-blue-700">貴重なご意見をいただき、誠にありがとうございました。</p>
     </div>
 
-    <% if @project.active? && @project.responses_count < @project.max_responses %>
+    <% if @project.active? && (@project.responses_count < @project.max_responses && @project.actual_responses_count < @project.max_responses) %>
       <div class="mt-6">
         <%= form_with url: restart_project_thank_you_path(@project), method: :post, local: true do |form| %>
           <%= form.submit "もう一度回答する", class: "bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition duration-200" %>

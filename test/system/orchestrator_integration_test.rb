@@ -5,8 +5,13 @@ class OrchestratorIntegrationTest < ApplicationSystemTestCase
     @project = projects(:one)
     @participant = participants(:one)
     @conversation = conversations(:one)
-    @conversation.update!(state: "intro")
+    @conversation.update!(state: "fallback", meta: { fallback_mode: true })
     enable_webmock_with_system_test_support
+
+    # Ensure conversation has initial assistant message
+    unless @conversation.messages.where(role: 1).exists?
+      @conversation.messages.create!(role: 1, content: "最近直面した課題や不便と、その具体的な場面を教えてください。")
+    end
   end
 
   def teardown

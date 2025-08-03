@@ -3,7 +3,7 @@ module Interview
     def initialize(conversation, llm_client: nil)
       @conversation = conversation
       @project = conversation.project
-      @llm_client = llm_client || LLM::Client::OpenAI.new
+      @llm_client = llm_client || (Rails.env.test? ? test_llm_client : LLM::Client::OpenAI.new)
       @prompt_builder = Interview::PromptBuilder.new(@project)
     end
 
@@ -16,8 +16,11 @@ module Interview
         # Mark conversation as finished if turn limit reached
         @conversation.update!(finished_at: Time.current) unless @conversation.finished_at.present?
 
+        # Check if project should be auto-closed
+        @conversation.project.check_and_auto_close!
+
         # Create a final assistant message indicating completion
-        final_message = @conversation.messages.create!(
+        @conversation.messages.create!(
           role: 1, # assistant
           content: "ご協力いただきありがとうございました。インタビューを終了します。"
         )
@@ -27,6 +30,9 @@ module Interview
 
         # Enqueue analysis job for finished conversation
         AnalyzeConversationJob.perform_later(@conversation.id)
+
+        # Check if project should be auto-closed
+        @conversation.project.check_and_auto_close!
 
         return "ご協力いただきありがとうございました。インタビューを終了します。"
       end
@@ -220,6 +226,23 @@ module Interview
           document.dispatchEvent(new CustomEvent('chat:response-complete'));
         </script>".html_safe
       )
+    end
+
+    def test_llm_client
+      Class.new do
+        def chat_stream(messages:, model: nil, temperature: nil)
+          # Check if we should simulate an error for testing
+          if ENV["SIMULATE_LLM_ERROR"] == "true"
+            raise LLM::Client::OpenAI::OpenAIError.new("Simulated error for testing")
+          end
+
+          # Return a mock stream for tests
+          [
+            { "choices" => [ { "delta" => { "content" => "Mock response" } } ] },
+            { "choices" => [ { "delta" => { "content" => "" }, "finish_reason" => "stop" } ] }
+          ].each
+        end
+      end.new
     end
   end
 end

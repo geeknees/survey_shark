@@ -46,23 +46,32 @@ module Interview
         assistant_content = FALLBACK_QUESTIONS[question_number - 1]
 
         # Create assistant message
-        @conversation.messages.create!(
+        assistant_message = @conversation.messages.create!(
           role: 1, # assistant
           content: assistant_content
         )
+
+        # Immediately broadcast the update
+        broadcast_message_update(assistant_message)
       else
         # All questions asked, finish conversation
         assistant_content = "ご協力いただき、ありがとうございました。貴重なお話をお聞かせいただけました。"
 
-        @conversation.messages.create!(
+        assistant_message = @conversation.messages.create!(
           role: 1, # assistant
           content: assistant_content
         )
+
+        # Immediately broadcast the update
+        broadcast_message_update(assistant_message)
 
         @conversation.update!(
           state: "done",
           finished_at: Time.current
         )
+
+        # Check if project should be auto-closed
+        @conversation.project.check_and_auto_close!
 
         # Enqueue analysis job for finished conversation
         AnalyzeConversationJob.perform_later(@conversation.id)
@@ -74,18 +83,40 @@ module Interview
     private
 
     def determine_question_number
-      # Count user messages (excluding skip messages) to determine which question to ask
+      # Count user messages (excluding skip messages and excluding the current message being processed)
+      # to determine which question to ask next
       user_messages_count = @conversation.messages
                                       .where(role: 0)
                                       .where.not(content: "[スキップ]")
                                       .count
 
       # Return the question number based on how many user messages we've seen
-      # 1 user message -> ask question 1
-      # 2 user messages -> ask question 2
-      # 3 user messages -> ask question 3
+      # 1 user message -> ask question 1 (index 0)
+      # 2 user messages -> ask question 2 (index 1)
+      # 3 user messages -> ask question 3 (index 2)
       # 4+ user messages -> finish (return > 3)
-      user_messages_count
+      question_number = user_messages_count
+      question_number
+    end
+
+    def broadcast_message_update(message)
+      # Broadcast the complete message list update
+      Turbo::StreamsChannel.broadcast_replace_to(
+        @conversation,
+        target: "messages",
+        partial: "conversations/messages",
+        locals: { messages: @conversation.messages.order(:created_at) }
+      )
+
+      # Broadcast custom script to reset form
+      Turbo::StreamsChannel.broadcast_action_to(
+        @conversation,
+        action: "append",
+        target: "messages",
+        html: "<script>
+          document.dispatchEvent(new CustomEvent('chat:response-complete'));
+        </script>".html_safe
+      )
     end
   end
 end

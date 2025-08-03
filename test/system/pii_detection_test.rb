@@ -6,6 +6,9 @@ class PiiDetectionTest < ApplicationSystemTestCase
     @participant = participants(:one)
     @conversation = conversations(:one)
     enable_webmock_with_system_test_support
+
+    # Set conversation to fallback mode to avoid OpenAI calls
+    @conversation.update!(state: "fallback", meta: { fallback_mode: true })
   end
 
   def teardown

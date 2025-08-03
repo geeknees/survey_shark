@@ -78,10 +78,10 @@ class ChatTest < ApplicationSystemTestCase
 
     # Fill in some text to enable the button
     fill_in "content", with: "Test message"
-    
-    # Clear the text to disable it again 
+
+    # Clear the text to disable it again
     fill_in "content", with: ""
-    
+
     # Submit button should be disabled again
     assert submit_button[:disabled], "Submit button should be disabled when textarea is cleared"
   end

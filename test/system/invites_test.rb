@@ -62,11 +62,15 @@ class InvitesTest < ApplicationSystemTestCase
     invite_link = @project.invite_links.create!
     @project.update!(responses_count: 1) # One response already
 
+    puts "Before start: responses_count=#{@project.responses_count}, status=#{@project.status}"
+
     visit invite_path(invite_link.token)
     click_on "同意して開始"
 
     # Project should now be closed
     @project.reload
+    puts "After start: responses_count=#{@project.responses_count}, status=#{@project.status}"
+
     assert_equal "closed", @project.status
     assert_equal 2, @project.responses_count
   end

@@ -9,10 +9,13 @@ class InvitesController < ApplicationController
 
   def start
     # Increment responses count and redirect to attributes
+    Rails.logger.info "Before increment: responses_count=#{@project.responses_count}"
     @project.increment!(:responses_count)
+    Rails.logger.info "After increment: responses_count=#{@project.responses_count}"
 
     # Auto-close project if max responses reached
     if @project.responses_count >= @project.max_responses
+      Rails.logger.info "Auto-closing project: responses_count=#{@project.responses_count}, max_responses=#{@project.max_responses}"
       @project.update!(status: "closed")
     end
 

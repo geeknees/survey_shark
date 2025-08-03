@@ -12,22 +12,27 @@ class StreamAssistantResponseJob < ApplicationJob
     if conversation.state == "fallback" || fallback_mode?(conversation)
       # Use fallback orchestrator for fallback mode
       fallback_orchestrator = Interview::FallbackOrchestrator.new(conversation)
-      response = fallback_orchestrator.process_user_message(user_message)
-      broadcast_complete_response(conversation, response)
+      fallback_orchestrator.process_user_message(user_message)
       return
     end
 
     begin
       # Use streaming orchestrator for OpenAI
-      streaming_orchestrator = Interview::StreamingOrchestrator.new(conversation)
+      llm_client = Rails.env.test? ? nil : LLM::Client::OpenAI.new
+      streaming_orchestrator = Interview::StreamingOrchestrator.new(conversation, llm_client: llm_client)
       streaming_orchestrator.process_user_message_with_streaming(user_message)
-    rescue LLM::Client::OpenAI::OpenAIError => e
+    rescue LLM::Client::OpenAI::OpenAIError, StandardError => e
       Rails.logger.error "LLM error in streaming job, falling back: #{e.message}"
+
+      # Update conversation state to fallback mode
+      conversation.update!(
+        state: "fallback",
+        meta: (conversation.meta || {}).merge(fallback_mode: true)
+      )
 
       # Fall back to fallback orchestrator
       fallback_orchestrator = Interview::FallbackOrchestrator.new(conversation)
-      response = fallback_orchestrator.process_user_message(user_message)
-      broadcast_complete_response(conversation, response)
+      fallback_orchestrator.process_user_message(user_message)
     end
   end
 

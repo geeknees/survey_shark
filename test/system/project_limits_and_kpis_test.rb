@@ -59,9 +59,9 @@ class ProjectLimitsAndKpisTest < ApplicationSystemTestCase
 
     # Complete first conversation
     visit invite_path(@invite_link.token)
-    click_button "開始"
+    click_button "同意して開始"
 
-    fill_in "age", with: "30"
+    fill_in "participant_age", with: "30"
     click_button "会話を開始"
 
     # Simulate conversation completion by directly updating the conversation
@@ -82,7 +82,7 @@ class ProjectLimitsAndKpisTest < ApplicationSystemTestCase
       age: 25
     )
 
-    conversation = @project.conversations.create!(
+    @project.conversations.create!(
       participant: participant,
       state: "done",
       started_at: 1.hour.ago,
@@ -115,6 +115,9 @@ class ProjectLimitsAndKpisTest < ApplicationSystemTestCase
       state: "done",
       finished_at: Time.current
     )
+
+    # Trigger auto-close check
+    @project.check_and_auto_close!
 
     visit project_thank_you_path(@project)
 

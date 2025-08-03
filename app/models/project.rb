@@ -29,4 +29,16 @@ class Project < ApplicationRecord
   def closed?
     status == "closed"
   end
+
+  # Calculate actual responses count (finished conversations)
+  def actual_responses_count
+    conversations.where.not(finished_at: nil).count
+  end
+
+  # Auto-close project if response limit reached
+  def check_and_auto_close!
+    if active? && actual_responses_count >= max_responses
+      update!(status: "closed")
+    end
+  end
 end
