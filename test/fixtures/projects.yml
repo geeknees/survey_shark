@@ -3,10 +3,11 @@
 one:
   name: Test Project
   goal: Test survey goal
+  initial_question: 'まず、日常生活で感じている課題や不便なことを3つまで教えてください。どんな小さなことでも構いません。'
   must_ask: []
   never_ask: []
   tone: polite_soft
-  limits: {"max_turns": 12, "max_deep": 2}
+  limits: { 'max_turns': 12, 'max_deep': 2 }
   status: active
   max_responses: 50
   responses_count: 0
@@ -14,9 +15,10 @@ one:
 two:
   name: MyString
   goal: MyText
-  must_ask: 
-  never_ask: 
-  tone: MyString
-  limits: 
-  status: MyString
-  max_responses: 1
+  initial_question: 'あなたの体験について教えてください'
+  must_ask:
+  never_ask:
+  tone: polite_soft
+  limits: { 'max_turns': 12, 'max_deep': 2 }
+  status: draft
+  max_responses: 50

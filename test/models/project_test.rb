@@ -2,18 +2,24 @@ require "test_helper"
 
 class ProjectTest < ActiveSupport::TestCase
   test "should be valid with required attributes" do
-    project = Project.new(name: "Test Project")
+    project = Project.new(name: "Test Project", initial_question: "まず、日常生活で感じている課題や不便なことを3つまで教えてください。")
     assert project.valid?
   end
 
   test "should require name" do
-    project = Project.new
+    project = Project.new(initial_question: "まず、日常生活で感じている課題や不便なことを3つまで教えてください。")
     assert_not project.valid?
     assert_includes project.errors[:name], "can't be blank"
   end
 
+  test "should require initial_question" do
+    project = Project.new(name: "Test Project", initial_question: "")
+    assert_not project.valid?
+    assert_includes project.errors[:initial_question], "can't be blank"
+  end
+
   test "should have default values" do
-    project = Project.create!(name: "Test Project")
+    project = Project.create!(name: "Test Project", initial_question: "まず、日常生活で感じている課題や不便なことを3つまで教えてください。")
     assert_equal [], project.must_ask
     assert_equal [], project.never_ask
     assert_equal "polite_soft", project.tone
@@ -23,7 +29,7 @@ class ProjectTest < ActiveSupport::TestCase
   end
 
   test "should validate status inclusion" do
-    project = Project.new(name: "Test", status: "invalid")
+    project = Project.new(name: "Test", initial_question: "まず、日常生活で感じている課題や不便なことを3つまで教えてください。", status: "invalid")
     assert_not project.valid?
     assert_includes project.errors[:status], "is not included in the list"
   end
@@ -60,7 +66,7 @@ class ProjectTest < ActiveSupport::TestCase
   end
 
   test "should have associations" do
-    project = Project.create!(name: "Test Project")
+    project = Project.create!(name: "Test Project", initial_question: "まず、日常生活で感じている課題や不便なことを3つまで教えてください。")
     assert_respond_to project, :invite_links
     assert_respond_to project, :participants
     assert_respond_to project, :conversations

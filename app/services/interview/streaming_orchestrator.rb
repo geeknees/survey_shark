@@ -97,7 +97,12 @@ module Interview
 
     case current_state
     when "intro"
-      "enumerate"
+      # Stay in intro for the initial system message, move to enumerate after user's first real response
+      if user_message.content == "[インタビュー開始]"
+        "intro"  # Stay in intro state for initial greeting
+      else
+        "enumerate"  # Move to enumerate after user's first response
+      end
     when "enumerate"
       pain_points = extract_pain_points_from_conversation
       if pain_points.length >= 3 || user_indicates_completion?(user_message.content)

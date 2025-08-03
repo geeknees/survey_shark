@@ -5,6 +5,7 @@ class Project < ApplicationRecord
   has_many :insight_cards, dependent: :destroy
 
   validates :name, presence: true
+  validates :initial_question, presence: true
   validates :status, inclusion: { in: %w[draft active closed] }
   validates :tone, inclusion: { in: %w[polite_soft polite_firm casual_soft casual_firm] }
   validates :max_responses, presence: true, numericality: { greater_than: 0 }

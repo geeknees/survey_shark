@@ -52,7 +52,7 @@ class ProjectsController < ApplicationController
 
   def project_params
     permitted = params.require(:project).permit(
-      :name, :goal, :tone, :status, :max_responses, :must_ask_text, :never_ask_text,
+      :name, :goal, :initial_question, :tone, :status, :max_responses, :must_ask_text, :never_ask_text,
       limits: [ :max_turns, :max_deep ]
     )
 

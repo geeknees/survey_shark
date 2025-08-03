@@ -36,7 +36,9 @@ module Interview
   def behavior_prompt_for_state(state)
     case state
     when "intro"
-      "まず、日常生活で感じている課題や不便なことを3つまで教えてください。どんな小さなことでも構いません。"
+      @project.initial_question.present? ?
+        @project.initial_question :
+        "まず、日常生活で感じている課題や不便なことを3つまで教えてください。どんな小さなことでも構いません。"
     when "enumerate"
       "他にも何か課題や不便に感じていることはありますか？最大3つまでお聞かせください。"
     when "recommend"
