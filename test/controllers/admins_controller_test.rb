@@ -49,7 +49,7 @@ class AdminsControllerTest < ActionDispatch::IntegrationTest
       }
     }
 
-    assert_response :unprocessable_entity
+    assert_response :unprocessable_content
     assert_equal "Current password is incorrect.", flash[:alert]
 
     # Verify the password was not changed
@@ -67,7 +67,7 @@ class AdminsControllerTest < ActionDispatch::IntegrationTest
       }
     }
 
-    assert_response :unprocessable_entity
+    assert_response :unprocessable_content
     assert_equal "Password confirmation doesn't match or password is too short.", flash[:alert]
 
     # Verify the password was not changed
@@ -85,7 +85,7 @@ class AdminsControllerTest < ActionDispatch::IntegrationTest
       }
     }
 
-    assert_response :unprocessable_entity
+    assert_response :unprocessable_content
     assert_equal "Password confirmation doesn't match or password is too short.", flash[:alert]
 
     # Verify the password was not changed
@@ -99,7 +99,8 @@ class AdminsControllerTest < ActionDispatch::IntegrationTest
     delete session_url
 
     get edit_password_admin_url(@admin)
-    # This should redirect to login (implementation depends on authentication logic)
-    # You may need to adjust this based on your authentication setup
+    
+    # Should redirect to login page
+    assert_redirected_to new_session_path
   end
 end
