@@ -72,6 +72,59 @@
     </div>
   <% end %>
 
+  <!-- KPI Dashboard -->
+  <% kpis = ProjectKpis.new(@project) %>
+  <div class="bg-white shadow-sm rounded-lg p-6 mb-8">
+    <h2 class="text-lg font-semibold text-gray-900 mb-6">プロジェクト指標</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Total Responses -->
+      <div class="text-center">
+        <div class="text-3xl font-bold text-blue-600">
+          <%= kpis.total_responses %>/<%= kpis.max_responses %>
+        </div>
+        <div class="text-sm text-gray-600 mt-1">総回答数</div>
+        <div class="text-xs text-gray-500">
+          残り<%= kpis.remaining_slots %>枠
+        </div>
+      </div>
+      
+      <!-- Strong Pain Rate -->
+      <div class="text-center">
+        <div class="text-3xl font-bold text-red-600">
+          <%= kpis.strong_pain_rate %>%
+        </div>
+        <div class="text-sm text-gray-600 mt-1">強いペイン出現率</div>
+        <div class="text-xs text-gray-500">
+          深刻度≥4の会話比
+        </div>
+      </div>
+      
+      <!-- Average Turn Count -->
+      <div class="text-center">
+        <div class="text-3xl font-bold text-green-600">
+          <%= kpis.average_turn_count %>
+        </div>
+        <div class="text-sm text-gray-600 mt-1">平均ターン数</div>
+        <div class="text-xs text-gray-500">
+          会話あたりの発言数
+        </div>
+      </div>
+    </div>
+    
+    <!-- Progress Bar -->
+    <div class="mt-6">
+      <div class="flex justify-between text-sm text-gray-600 mb-2">
+        <span>進捗状況</span>
+        <span><%= kpis.completion_rate %>%</span>
+      </div>
+      <div class="w-full bg-gray-200 rounded-full h-2">
+        <div class="bg-blue-500 h-2 rounded-full transition-all duration-300" 
+             style="width: <%= [kpis.completion_rate, 100].min %>%">
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
     <div class="space-y-6">
       <div class="bg-white shadow-sm rounded-lg p-6">

@@ -34,6 +34,12 @@ class Interview::Orchestrator
         
         # Enqueue analysis job for finished conversation
         AnalyzeConversationJob.perform_later(@conversation.id)
+        
+        # Store participant data in session for potential restart
+        if @conversation.participant
+          session[:participant_age] = @conversation.participant.age
+          session[:participant_attributes] = @conversation.participant.custom_attributes
+        end
       end
 
       assistant_content
