@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  project: one
+  anon_hash: MyString
+  age: 1
+  custom_attributes: 
+
+two:
+  project: two
+  anon_hash: MyString
+  age: 1
+  custom_attributes: 

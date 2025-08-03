@@ -1,0 +1,23 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  project: one
+  conversation: one
+  theme: MyString
+  jtbds: MyText
+  evidence: 
+  severity: 1
+  freq_conversations: 1
+  freq_messages: 1
+  confidence_label: MyString
+
+two:
+  project: two
+  conversation: two
+  theme: MyString
+  jtbds: MyText
+  evidence: 
+  severity: 1
+  freq_conversations: 1
+  freq_messages: 1
+  confidence_label: MyString
