@@ -1,4 +1,6 @@
 require "test_helper"
+require_relative "../../../app/services/interview"
+require_relative "../../../app/services/interview/fallback_orchestrator"
 
 class Interview::FallbackOrchestratorTest < ActiveSupport::TestCase
   def setup

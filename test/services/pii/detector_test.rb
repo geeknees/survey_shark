@@ -1,4 +1,8 @@
 require "test_helper"
+require_relative "../../../app/services/pii"
+require_relative "../../../app/services/pii/detector"
+require_relative "../../../app/services/pii/detection_result"
+require_relative "../../../app/services/pii/fake_llm_client"
 
 class PII::DetectorTest < ActiveSupport::TestCase
   def setup

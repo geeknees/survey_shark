@@ -1,5 +1,11 @@
 require "test_helper"
 require "webmock/minitest"
+require_relative "../../../app/services/interview"
+require_relative "../../../app/services/interview/orchestrator"
+require_relative "../../../app/services/llm"
+require_relative "../../../app/services/llm/client"
+require_relative "../../../app/services/llm/client/base"
+require_relative "../../../app/services/llm/client/openai"
 
 class Interview::OrchestratorOpenAIIntegrationTest < ActiveSupport::TestCase
   def setup

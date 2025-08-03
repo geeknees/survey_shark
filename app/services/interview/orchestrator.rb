@@ -1,8 +1,9 @@
-class Interview::Orchestrator
-  STATES = %w[intro enumerate recommend choose deepening summary_check done].freeze
+module Interview
+  class Orchestrator
+    STATES = %w[intro enumerate recommend choose deepening summary_check done].freeze
 
-  def initialize(conversation, llm_client: nil)
-    @conversation = conversation
+    def initialize(conversation, llm_client: nil)
+      @conversation = conversation
     @project = conversation.project
     @llm_client = llm_client || default_llm_client
     @prompt_builder = Interview::PromptBuilder.new(@project)
@@ -174,5 +175,6 @@ class Interview::Orchestrator
 
   def fallback_mode?
     @conversation.meta&.dig("fallback_mode") == true
+  end
   end
 end

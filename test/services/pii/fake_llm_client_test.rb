@@ -1,4 +1,6 @@
 require "test_helper"
+require_relative "../../../app/services/pii"
+require_relative "../../../app/services/pii/fake_llm_client"
 
 class PII::FakeLLMClientTest < ActiveSupport::TestCase
   def setup

@@ -1,8 +1,10 @@
-class LLM::Client::Fake
-  def initialize(responses: nil)
-    @responses = responses || default_responses
-    @call_count = 0
-  end
+module LLM
+  module Client
+    class Fake
+      def initialize(responses: nil)
+        @responses = responses || default_responses
+        @call_count = 0
+      end
 
   def generate_response(system_prompt:, behavior_prompt:, conversation_history:, user_message:)
     response = @responses[@call_count % @responses.length]
@@ -48,5 +50,7 @@ class LLM::Client::Fake
       "これまでのお話をまとめさせていただきます。主な課題として挙げていただいたのは、日常生活での不便な点についてですね。この内容で間違いありませんか？",
       "ご協力いただき、ありがとうございました。貴重なお話をお聞かせいただけました。"
     ]
+  end
+    end
   end
 end

@@ -1,8 +1,9 @@
-class PII::FakeLLMClient
-  # Fake LLM client for testing PII detection
+module PII
+  class FakeLLMClient
+    # Fake LLM client for testing PII detection
 
-  def initialize(responses: nil)
-    @responses = responses || default_responses
+    def initialize(responses: nil)
+      @responses = responses || default_responses
   end
 
   def generate_response(system_prompt:, behavior_prompt:, conversation_history:, user_message:)
@@ -99,5 +100,6 @@ class PII::FakeLLMClient
 
   def default_responses
     [ no_pii_response ]
+  end
   end
 end

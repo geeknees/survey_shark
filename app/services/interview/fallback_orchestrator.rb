@@ -1,8 +1,9 @@
-class Interview::FallbackOrchestrator
-  FALLBACK_QUESTIONS = [
-    "最近直面した課題や不便と、その具体的な場面を教えてください。",
-    "先ほど挙げられた中から、最も重要だと思う1件を選び、その理由を一言で教えてください。",
-    "今思っていることを書いてください。"
+module Interview
+  class FallbackOrchestrator
+    FALLBACK_QUESTIONS = [
+      "最近直面した課題や不便と、その具体的な場面を教えてください。",
+      "先ほど挙げられた中から、最も重要だと思う1件を選び、その理由を一言で教えてください。",
+      "今思っていることを書いてください。"
   ].freeze
 
   def initialize(conversation)
@@ -58,5 +59,6 @@ class Interview::FallbackOrchestrator
 
     # Return the next question number (1-indexed)
     user_messages_count
+  end
   end
 end

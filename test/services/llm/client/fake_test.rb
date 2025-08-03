@@ -1,4 +1,7 @@
 require "test_helper"
+require_relative "../../../../app/services/llm"
+require_relative "../../../../app/services/llm/client"
+require_relative "../../../../app/services/llm/client/fake"
 
 class LLM::Client::FakeTest < ActiveSupport::TestCase
   def setup

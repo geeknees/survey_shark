@@ -1,13 +1,15 @@
 require "net/http"
 require "json"
 
-class LLM::Client::OpenAI < LLM::Client::Base
-  API_URL = "https://api.openai.com/v1/chat/completions"
-  MAX_RESPONSE_LENGTH = 400
-  TIMEOUT_SECONDS = 30
+module LLM
+  module Client
+    class OpenAI < LLM::Client::Base
+      API_URL = "https://api.openai.com/v1/chat/completions"
+      MAX_RESPONSE_LENGTH = 400
+      TIMEOUT_SECONDS = 30
 
-  def initialize(api_key: nil, model: "gpt-4", temperature: 0.2)
-    @api_key = api_key || ENV["OPENAI_API_KEY"]
+      def initialize(api_key: nil, model: "gpt-4", temperature: 0.2)
+        @api_key = api_key || ENV["OPENAI_API_KEY"]
     @model = model
     @temperature = temperature
 
@@ -225,5 +227,7 @@ class LLM::Client::OpenAI < LLM::Client::Base
     truncated
   end
 
-  class OpenAIError < StandardError; end
+      class OpenAIError < StandardError; end
+    end
+  end
 end

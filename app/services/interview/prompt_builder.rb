@@ -1,7 +1,8 @@
-class Interview::PromptBuilder
-  def initialize(project)
-    @project = project
-  end
+module Interview
+  class PromptBuilder
+    def initialize(project)
+      @project = project
+    end
 
   def system_prompt
     tone = @project.tone || "polite_soft"
@@ -76,5 +77,6 @@ class Interview::PromptBuilder
     return "" if @project.never_ask.blank?
 
     "## 聞いてはいけない項目\n" + @project.never_ask.map { |item| "- #{item}" }.join("\n")
+  end
   end
 end

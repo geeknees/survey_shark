@@ -1,8 +1,9 @@
-class Interview::StreamingOrchestrator
-  def initialize(conversation, llm_client: nil)
-    @conversation = conversation
-    @project = conversation.project
-    @llm_client = llm_client || LLM::Client::OpenAI.new
+module Interview
+  class StreamingOrchestrator
+    def initialize(conversation, llm_client: nil)
+      @conversation = conversation
+      @project = conversation.project
+      @llm_client = llm_client || LLM::Client::OpenAI.new
     @prompt_builder = Interview::PromptBuilder.new(@project)
   end
 
@@ -179,5 +180,6 @@ class Interview::StreamingOrchestrator
       partial: "conversations/messages",
       locals: { messages: @conversation.messages.order(:created_at) }
     )
+  end
   end
 end

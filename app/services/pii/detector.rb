@@ -1,7 +1,8 @@
-class PII::Detector
-  def initialize(llm_client: nil)
-    @llm_client = llm_client || default_llm_client
-  end
+module PII
+  class Detector
+    def initialize(llm_client: nil)
+      @llm_client = llm_client || default_llm_client
+    end
 
   def analyze(text)
     # Use LLM to detect PII
@@ -93,5 +94,6 @@ class PII::Detector
     else
       LLM::Client::OpenAI.new
     end
+  end
   end
 end

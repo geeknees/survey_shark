@@ -1,4 +1,7 @@
 require "test_helper"
+require_relative "../../../app/services/analysis"
+require_relative "../../../app/services/analysis/conversation_analyzer"
+require_relative "../../../app/services/analysis/fake_llm_client"
 
 class Analysis::ConversationAnalyzerTest < ActiveSupport::TestCase
   def setup

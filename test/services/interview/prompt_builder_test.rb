@@ -1,4 +1,6 @@
 require "test_helper"
+require_relative "../../../app/services/interview"
+require_relative "../../../app/services/interview/prompt_builder"
 
 class Interview::PromptBuilderTest < ActiveSupport::TestCase
   def setup
