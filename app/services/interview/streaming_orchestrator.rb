@@ -5,6 +5,7 @@ module Interview
       @project = conversation.project
       @llm_client = llm_client || (Rails.env.test? ? test_llm_client : LLM::Client::OpenAI.new)
       @prompt_builder = Interview::PromptBuilder.new(@project)
+      @broadcast_manager = Interview::BroadcastManager.new(@conversation)
     end
 
     def process_user_message_with_streaming(user_message)
@@ -25,8 +26,8 @@ module Interview
           content: "ご協力いただきありがとうございました。インタビューを終了します。"
         )
 
-        # Broadcast the final message
-        broadcast_final_update
+        # Broadcast the final message using the broadcast manager
+        @broadcast_manager.broadcast_final_update
 
         # Enqueue analysis job for finished conversation
         AnalyzeConversationJob.perform_later(@conversation.id)
@@ -76,14 +77,14 @@ module Interview
           assistant_message.update!(content: accumulated_content)
         end
 
-        # Broadcast the streaming update
-        broadcast_streaming_update(assistant_message, chunk)
+        # Broadcast the streaming update using the broadcast manager
+        @broadcast_manager.broadcast_streaming_update(assistant_message, chunk)
       end
 
       # Final update with complete content
       if assistant_message
         assistant_message.update!(content: accumulated_content)
-        broadcast_final_update
+        @broadcast_manager.broadcast_final_update
       end
 
       # Check if conversation is complete
@@ -197,35 +198,6 @@ module Interview
       else
         "お話しいただいた内容"
       end
-    end
-
-    def broadcast_streaming_update(message, chunk)
-      # Broadcast individual chunk for real-time streaming effect
-      Turbo::StreamsChannel.broadcast_append_to(
-        @conversation,
-        target: "streaming-content-#{message.id}",
-        content: chunk
-      )
-    end
-
-    def broadcast_final_update
-      # Broadcast complete message list update
-      Turbo::StreamsChannel.broadcast_replace_to(
-        @conversation,
-        target: "messages",
-        partial: "conversations/messages",
-        locals: { messages: @conversation.messages.order(:created_at) }
-      )
-
-      # Broadcast custom script to reset form
-      Turbo::StreamsChannel.broadcast_action_to(
-        @conversation,
-        action: "append",
-        target: "messages",
-        html: "<script>
-          document.dispatchEvent(new CustomEvent('chat:response-complete'));
-        </script>".html_safe
-      )
     end
 
     def test_llm_client

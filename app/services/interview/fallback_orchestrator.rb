@@ -8,6 +8,7 @@ module Interview
 
     def initialize(conversation)
       @conversation = conversation
+      @broadcast_manager = Interview::BroadcastManager.new(@conversation)
     end
 
     def process_user_message(user_message)
@@ -51,8 +52,8 @@ module Interview
           content: assistant_content
         )
 
-        # Immediately broadcast the update
-        broadcast_message_update(assistant_message)
+        # Immediately broadcast the update using the broadcast manager
+        @broadcast_manager.broadcast_message_update(assistant_message)
       else
         # All questions asked, finish conversation
         assistant_content = "ご協力いただき、ありがとうございました。貴重なお話をお聞かせいただけました。"
@@ -62,8 +63,8 @@ module Interview
           content: assistant_content
         )
 
-        # Immediately broadcast the update
-        broadcast_message_update(assistant_message)
+        # Immediately broadcast the update using the broadcast manager
+        @broadcast_manager.broadcast_message_update(assistant_message)
 
         @conversation.update!(
           state: "done",
@@ -97,26 +98,6 @@ module Interview
       # 4+ user messages -> finish (return > 3)
       question_number = user_messages_count
       question_number
-    end
-
-    def broadcast_message_update(message)
-      # Broadcast the complete message list update
-      Turbo::StreamsChannel.broadcast_replace_to(
-        @conversation,
-        target: "messages",
-        partial: "conversations/messages",
-        locals: { messages: @conversation.messages.order(:created_at) }
-      )
-
-      # Broadcast custom script to reset form
-      Turbo::StreamsChannel.broadcast_action_to(
-        @conversation,
-        action: "append",
-        target: "messages",
-        html: "<script>
-          document.dispatchEvent(new CustomEvent('chat:response-complete'));
-        </script>".html_safe
-      )
     end
   end
 end
