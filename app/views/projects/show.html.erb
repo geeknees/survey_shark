@@ -31,15 +31,17 @@
       <% if @project.invite_links.any? %>
         <% invite_link = @project.invite_links.first %>
         <div class="space-y-3">
-          <div>
+          <div data-controller="copy-button">
             <label class="block text-sm font-medium text-green-700 mb-1">Public Survey URL:</label>
             <div class="flex items-center space-x-2">
               <input type="text"
                      value="<%= invite_url(invite_link.token) %>"
                      readonly
                      class="flex-1 px-3 py-2 bg-white border border-green-300 rounded-lg text-sm"
-                     onclick="this.select()">
-              <button onclick="navigator.clipboard.writeText('<%= invite_url(invite_link.token) %>')"
+                     onclick="this.select()"
+                     data-copy-button-target="input">
+              <button data-action="click->copy-button#copy"
+                      data-copy-button-target="button"
                       class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm transition-colors">
                 Copy
               </button>
