@@ -98,7 +98,10 @@ class InsightsTest < ApplicationSystemTestCase
   test "empty insights page shows appropriate message" do
     sign_in_as @admin
 
-    visit project_insights_path(@project)
+    # Create a new project without insights to test empty state
+    empty_project = Project.create!(name: "Empty Project", description: "Test project with no insights")
+
+    visit project_insights_path(empty_project)
 
     assert_text "まだインサイトがありません"
     assert_text "会話が完了すると、自動的にインサイトが生成されます"

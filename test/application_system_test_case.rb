@@ -7,9 +7,9 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
 
   def setup
     super
-    # Allow local connections for system tests when WebMock is enabled
-    if defined?(WebMock) && WebMock.net_connect_allowed?
-      WebMock.disable_net_connect!(allow_localhost: true, allow: [ "127.0.0.1", "localhost" ])
+    # Disable WebMock for system tests to avoid conflicts with Selenium
+    if defined?(WebMock)
+      WebMock.disable!
     end
   end
 
@@ -17,7 +17,7 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     visit new_session_path
     fill_in "email_address", with: admin.email_address
     fill_in "password", with: "password123"
-    click_on "Sign in"
+    click_button "Sign in"
   end
 
   # Helper method for system tests that need WebMock

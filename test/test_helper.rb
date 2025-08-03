@@ -1,4 +1,6 @@
 ENV["RAILS_ENV"] ||= "test"
+# Set a fake OpenAI API key for tests to avoid API key errors
+ENV["OPENAI_API_KEY"] ||= "test-api-key"
 require_relative "../config/environment"
 require "rails/test_help"
 require "minitest/mock"

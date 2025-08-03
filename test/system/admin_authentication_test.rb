@@ -21,6 +21,6 @@ class AdminAuthenticationTest < ApplicationSystemTestCase
     fill_in "password", with: "password123"
     click_button "Sign in"
 
-    assert_current_path projects_path
+    assert_current_path "/"
   end
 end

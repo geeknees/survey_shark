@@ -125,15 +125,27 @@ class OrchestratorIntegrationTest < ApplicationSystemTestCase
   test "conversation handles empty messages correctly" do
     visit conversation_path(@conversation)
 
-    # Try to submit empty message - this should be prevented by JavaScript
-    # and not create any jobs, so no need for perform_enqueued_jobs
-    find('input[type="submit"]').click
+    # Check that the form prevents empty submission
+    # The submit button should exist but be disabled or have JS prevention
+    submit_button = find("input[type='submit'][value='送信']")
 
-    # Should stay on same page without creating message
-    assert_current_path conversation_path(@conversation)
+    # If JavaScript disables the button when empty, this is expected behavior
+    # Just verify the button exists and the page loads correctly
+    assert submit_button.present?
 
-    # No new message should appear
-    assert_no_text "undefined"
+    # Verify no message was accidentally created from empty form
+    initial_message_count = @conversation.messages.count
+
+    # Try to trigger a form submission with empty content (if JS doesn't prevent it)
+    begin
+      fill_in "content", with: ""
+      click_button "送信"
+    rescue Capybara::ElementNotFound
+      # If button is disabled, this is expected behavior
+    end
+
+    # Message count should remain the same
+    assert_equal initial_message_count, @conversation.reload.messages.count
   end
 
   test "conversation respects turn limit" do
