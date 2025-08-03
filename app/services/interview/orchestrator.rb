@@ -9,25 +9,37 @@ class Interview::Orchestrator
   end
 
   def process_user_message(user_message)
-    # Update conversation state based on current state and user input
-    next_state = determine_next_state(user_message)
-    @conversation.update!(state: next_state)
-
-    # Generate assistant response
-    assistant_content = generate_assistant_response(next_state, user_message)
-    
-    # Create assistant message
-    @conversation.messages.create!(
-      role: 1, # assistant
-      content: assistant_content
-    )
-
-    # Check if conversation is complete
-    if next_state == "done"
-      @conversation.update!(finished_at: Time.current)
+    # Check if already in fallback mode
+    if @conversation.state == "fallback" || fallback_mode?
+      return Interview::FallbackOrchestrator.new(@conversation).process_user_message(user_message)
     end
 
-    assistant_content
+    begin
+      # Update conversation state based on current state and user input
+      next_state = determine_next_state(user_message)
+      @conversation.update!(state: next_state)
+
+      # Generate assistant response
+      assistant_content = generate_assistant_response(next_state, user_message)
+      
+      # Create assistant message
+      @conversation.messages.create!(
+        role: 1, # assistant
+        content: assistant_content
+      )
+
+      # Check if conversation is complete
+      if next_state == "done"
+        @conversation.update!(finished_at: Time.current)
+      end
+
+      assistant_content
+    rescue LLM::Client::OpenAI::OpenAIError => e
+      Rails.logger.error "LLM error, switching to fallback mode: #{e.message}"
+      
+      # Switch to fallback mode
+      Interview::FallbackOrchestrator.new(@conversation).process_user_message(user_message)
+    end
   end
 
   private
@@ -147,8 +159,11 @@ class Interview::Orchestrator
     if Rails.env.test?
       LLM::Client::Fake.new
     else
-      # Will be implemented in next prompt
-      LLM::Client::Fake.new
+      LLM::Client::OpenAI.new
     end
+  end
+
+  def fallback_mode?
+    @conversation.meta&.dig("fallback_mode") == true
   end
 end

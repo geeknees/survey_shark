@@ -19,8 +19,8 @@ class ConversationsController < ApplicationController
       content: content.truncate(500)
     )
 
-    # Enqueue orchestration job
-    OrchestrateInterviewJob.perform_later(@conversation.id, user_message.id)
+    # Enqueue streaming orchestration job
+    StreamAssistantResponseJob.perform_later(@conversation.id, user_message.id)
     
     redirect_to @conversation
   end
@@ -32,8 +32,8 @@ class ConversationsController < ApplicationController
       content: "[スキップ]"
     )
 
-    # Enqueue orchestration job
-    OrchestrateInterviewJob.perform_later(@conversation.id, user_message.id)
+    # Enqueue streaming orchestration job
+    StreamAssistantResponseJob.perform_later(@conversation.id, user_message.id)
     
     redirect_to @conversation
   end

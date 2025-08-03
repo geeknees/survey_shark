@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_03_002126) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_03_120000) do
   create_table "admins", force: :cascade do |t|
     t.string "email_address"
     t.string "password_digest"
@@ -29,6 +29,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_03_002126) do
     t.text "user_agent"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.json "meta", default: {}
     t.index ["participant_id"], name: "index_conversations_on_participant_id"
     t.index ["project_id"], name: "index_conversations_on_project_id"
   end
