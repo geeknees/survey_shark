@@ -22,7 +22,7 @@
                 <%= link_to project.name, project, class: "text-blue-600 hover:text-blue-900 font-medium" %>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
+                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
                   <%= case project.status
                       when 'draft' then 'bg-gray-100 text-gray-800'
                       when 'active' then 'bg-green-100 text-green-800'
@@ -36,8 +36,8 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                 <%= link_to "Edit", edit_project_path(project), class: "text-blue-600 hover:text-blue-900" %>
-                <%= link_to "Delete", project, method: :delete, 
-                    confirm: "Are you sure?", 
+                <%= link_to "Delete", project,
+                    data: { "turbo-method": "delete", "turbo-confirm": "Are you sure?" },
                     class: "text-red-600 hover:text-red-900" %>
               </td>
             </tr>

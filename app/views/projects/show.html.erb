@@ -3,7 +3,7 @@
     <div>
       <h1 class="text-3xl font-bold text-gray-900"><%= @project.name %></h1>
       <div class="flex items-center mt-2 space-x-4">
-        <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full 
+        <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full
           <%= case @project.status
               when 'draft' then 'bg-gray-100 text-gray-800'
               when 'active' then 'bg-green-100 text-green-800'
@@ -17,6 +17,9 @@
     <div class="flex space-x-3">
       <%= link_to "Insights", project_insights_path(@project), class: "bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" %>
       <%= link_to "Edit", edit_project_path(@project), class: "bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" %>
+      <%= link_to "Delete", @project,
+          data: { "turbo-method": "delete", "turbo-confirm": "Are you sure you want to delete this project? This action cannot be undone." },
+          class: "bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" %>
       <%= link_to "Back to Projects", projects_path, class: "bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors" %>
     </div>
   </div>
@@ -31,12 +34,12 @@
           <div>
             <label class="block text-sm font-medium text-green-700 mb-1">Public Survey URL:</label>
             <div class="flex items-center space-x-2">
-              <input type="text" 
-                     value="<%= invite_url(invite_link.token) %>" 
-                     readonly 
+              <input type="text"
+                     value="<%= invite_url(invite_link.token) %>"
+                     readonly
                      class="flex-1 px-3 py-2 bg-white border border-green-300 rounded-lg text-sm"
                      onclick="this.select()">
-              <button onclick="navigator.clipboard.writeText('<%= invite_url(invite_link.token) %>')" 
+              <button onclick="navigator.clipboard.writeText('<%= invite_url(invite_link.token) %>')"
                       class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm transition-colors">
                 Copy
               </button>
@@ -49,7 +52,7 @@
       <% else %>
         <div class="text-center">
           <p class="text-green-700 mb-4">Generate a public link to share this survey</p>
-          <%= link_to "Generate Link", generate_invite_link_project_path(@project), 
+          <%= link_to "Generate Link", generate_invite_link_project_path(@project),
               method: :post,
               class: "bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" %>
         </div>
@@ -87,7 +90,7 @@
           残り<%= kpis.remaining_slots %>枠
         </div>
       </div>
-      
+
       <!-- Strong Pain Rate -->
       <div class="text-center">
         <div class="text-3xl font-bold text-red-600">
@@ -98,7 +101,7 @@
           深刻度≥4の会話比
         </div>
       </div>
-      
+
       <!-- Average Turn Count -->
       <div class="text-center">
         <div class="text-3xl font-bold text-green-600">
@@ -110,7 +113,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Progress Bar -->
     <div class="mt-6">
       <div class="flex justify-between text-sm text-gray-600 mb-2">
@@ -118,7 +121,7 @@
         <span><%= kpis.completion_rate %>%</span>
       </div>
       <div class="w-full bg-gray-200 rounded-full h-2">
-        <div class="bg-blue-500 h-2 rounded-full transition-all duration-300" 
+        <div class="bg-blue-500 h-2 rounded-full transition-all duration-300"
              style="width: <%= [kpis.completion_rate, 100].min %>%">
         </div>
       </div>
@@ -129,7 +132,7 @@
     <div class="space-y-6">
       <div class="bg-white shadow-sm rounded-lg p-6">
         <h2 class="text-lg font-semibold text-gray-900 mb-4">Project Details</h2>
-        
+
         <% if @project.goal.present? %>
           <div class="mb-4">
             <h3 class="text-sm font-medium text-gray-700 mb-2">Goal/Description</h3>

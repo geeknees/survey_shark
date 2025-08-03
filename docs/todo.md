@@ -5,7 +5,7 @@
 - [x] OpenAIからのレスポンスが表示されない（There was an exception - NoMethodError(undefined method 'user' for an instance of Session)）
 - [x] スキップボタンが動かない
 - [x] チャット入力後、AIから返信ががあるまでローディングアニメーションを表示
-- [ ] プロジェクトの削除ができない
+- [x] プロジェクトの削除ができない
 - [x] Fix error: No route matches [GET] "/conversations/2/skip"
 - [ ] ナビゲーション用のメニューバーを追加
 - [ ] Adminのパスワード変更機能
