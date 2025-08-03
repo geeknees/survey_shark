@@ -4,10 +4,10 @@ class OrchestrateInterviewJob < ApplicationJob
   def perform(conversation_id, user_message_id)
     conversation = Conversation.find(conversation_id)
     user_message = Message.find(user_message_id)
-    
+
     orchestrator = Interview::Orchestrator.new(conversation)
     orchestrator.process_user_message(user_message)
-    
+
     # Broadcast the updated conversation via Turbo Stream
     broadcast_conversation_update(conversation)
   end

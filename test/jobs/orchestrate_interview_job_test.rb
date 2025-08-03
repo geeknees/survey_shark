@@ -10,7 +10,7 @@ class OrchestrateInterviewJobTest < ActiveJob::TestCase
     assert_difference "Message.count", 1 do
       OrchestrateInterviewJob.perform_now(@conversation.id, @user_message.id)
     end
-    
+
     assistant_message = @conversation.messages.assistant.last
     assert_not_nil assistant_message
     assert assistant_message.content.present?
@@ -18,9 +18,9 @@ class OrchestrateInterviewJobTest < ActiveJob::TestCase
 
   test "updates conversation state" do
     initial_state = @conversation.state
-    
+
     OrchestrateInterviewJob.perform_now(@conversation.id, @user_message.id)
-    
+
     # State should have progressed (exact state depends on current state and logic)
     @conversation.reload
     # We can't assert exact state without knowing the starting state and logic,

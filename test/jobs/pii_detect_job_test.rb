@@ -15,15 +15,15 @@ class PiiDetectJobTest < ActiveJob::TestCase
 
   test "detects and masks PII in user message" do
     PiiDetectJob.perform_now(@message_with_pii.id)
-    
+
     @message_with_pii.reload
-    
+
     # Content should be masked
     assert_includes @message_with_pii.content, "[氏名]"
     assert_includes @message_with_pii.content, "[電話番号]"
     refute_includes @message_with_pii.content, "田中太郎"
     refute_includes @message_with_pii.content, "03-1234-5678"
-    
+
     # Meta should be updated
     assert_equal true, @message_with_pii.meta["pii_processed"]
     assert_equal true, @message_with_pii.meta["pii_detected"]
@@ -32,12 +32,12 @@ class PiiDetectJobTest < ActiveJob::TestCase
 
   test "processes message without PII correctly" do
     PiiDetectJob.perform_now(@message_without_pii.id)
-    
+
     @message_without_pii.reload
-    
+
     # Content should remain unchanged
     assert_equal "今日は良い天気ですね。", @message_without_pii.content
-    
+
     # Meta should be updated
     assert_equal true, @message_without_pii.meta["pii_processed"]
     assert_equal false, @message_without_pii.meta["pii_detected"]
@@ -48,11 +48,11 @@ class PiiDetectJobTest < ActiveJob::TestCase
       role: :assistant,
       content: "田中さん、こんにちは。"
     )
-    
+
     PiiDetectJob.perform_now(assistant_message.id)
-    
+
     assistant_message.reload
-    
+
     # Should not be processed
     assert_nil assistant_message.meta&.dig("pii_processed")
     assert_equal "田中さん、こんにちは。", assistant_message.content
@@ -61,11 +61,11 @@ class PiiDetectJobTest < ActiveJob::TestCase
   test "skips already processed messages" do
     @message_with_pii.update!(meta: { pii_processed: true })
     original_content = @message_with_pii.content
-    
+
     PiiDetectJob.perform_now(@message_with_pii.id)
-    
+
     @message_with_pii.reload
-    
+
     # Content should remain unchanged
     assert_equal original_content, @message_with_pii.content
   end
@@ -78,9 +78,9 @@ class PiiDetectJobTest < ActiveJob::TestCase
         PiiDetectJob.perform_now(@message_with_pii.id)
       end
     end
-    
+
     @message_with_pii.reload
-    
+
     # Should mark as processed but not detected due to error
     assert_equal true, @message_with_pii.meta["pii_processed"]
     assert_equal false, @message_with_pii.meta["pii_detected"]

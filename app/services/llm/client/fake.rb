@@ -7,10 +7,10 @@ class LLM::Client::Fake
   def generate_response(system_prompt:, behavior_prompt:, conversation_history:, user_message:)
     response = @responses[@call_count % @responses.length]
     @call_count += 1
-    
+
     # Simulate some processing time
     sleep(0.1) if Rails.env.development?
-    
+
     response
   end
 
@@ -22,7 +22,7 @@ class LLM::Client::Fake
       conversation_history: messages,
       user_message: messages.last&.dig(:content) || ""
     )
-    
+
     if block_given?
       # Simulate streaming by yielding chunks
       words = response.split(" ")
@@ -32,7 +32,7 @@ class LLM::Client::Fake
         sleep(0.05) if Rails.env.development? # Simulate network delay
       end
     end
-    
+
     response
   end
 

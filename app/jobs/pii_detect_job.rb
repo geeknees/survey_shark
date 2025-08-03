@@ -3,20 +3,20 @@ class PiiDetectJob < ApplicationJob
 
   def perform(message_id)
     message = Message.find(message_id)
-    
+
     # Only process user messages
     return unless message.user?
-    
+
     # Skip if already processed
     return if message.meta&.dig("pii_processed")
-    
+
     detector = PII::Detector.new
     result = detector.analyze(message.content)
-    
+
     if result.pii_detected?
       # Create masked version
       masked_content = result.masked_content
-      
+
       # Update message with masked content and mark as processed
       message.update!(
         content: masked_content,
@@ -26,11 +26,11 @@ class PiiDetectJob < ApplicationJob
           original_content_hash: Digest::SHA256.hexdigest(message.content)
         )
       )
-      
+
       # Broadcast updates
       broadcast_message_update(message)
       broadcast_pii_warning(message.conversation)
-      
+
       Rails.logger.info "PII detected and masked in message #{message.id}"
     else
       # Mark as processed but no PII found

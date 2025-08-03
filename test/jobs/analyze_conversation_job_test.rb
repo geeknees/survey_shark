@@ -6,7 +6,7 @@ class AnalyzeConversationJobTest < ActiveJob::TestCase
     @participant = participants(:one)
     @conversation = conversations(:one)
     @conversation.update!(finished_at: Time.current)
-    
+
     # Add some user messages
     @conversation.messages.create!(role: :user, content: "コンピューターが遅くて困っています")
     @conversation.messages.create!(role: :user, content: "作業効率が悪くて大変です")
@@ -16,7 +16,7 @@ class AnalyzeConversationJobTest < ActiveJob::TestCase
     assert_difference "InsightCard.count", 1 do
       AnalyzeConversationJob.perform_now(@conversation.id)
     end
-    
+
     insight = InsightCard.last
     assert_equal @project, insight.project
     assert insight.theme.present?
@@ -30,7 +30,7 @@ class AnalyzeConversationJobTest < ActiveJob::TestCase
 
   test "skips analysis for unfinished conversations" do
     @conversation.update!(finished_at: nil)
-    
+
     assert_no_difference "InsightCard.count" do
       AnalyzeConversationJob.perform_now(@conversation.id)
     end
@@ -45,12 +45,12 @@ class AnalyzeConversationJobTest < ActiveJob::TestCase
       freq_conversations: 1,
       freq_messages: 2,
       confidence_label: "M",
-      evidence: ["既存の発言"]
+      evidence: [ "既存の発言" ]
     )
-    
+
     # Run analysis (should merge with existing card)
     AnalyzeConversationJob.perform_now(@conversation.id)
-    
+
     existing_card.reload
     assert_equal 2, existing_card.freq_conversations
     assert existing_card.freq_messages > 2
@@ -71,15 +71,15 @@ class AnalyzeConversationJobTest < ActiveJob::TestCase
 
   test "calculates confidence labels correctly" do
     AnalyzeConversationJob.perform_now(@conversation.id)
-    
+
     insight = InsightCard.last
-    assert_includes ["L", "M", "H"], insight.confidence_label
+    assert_includes [ "L", "M", "H" ], insight.confidence_label
   end
 
   test "handles conversations with no user messages" do
     # Remove all user messages
     @conversation.messages.where(role: 0).destroy_all
-    
+
     assert_no_difference "InsightCard.count" do
       AnalyzeConversationJob.perform_now(@conversation.id)
     end

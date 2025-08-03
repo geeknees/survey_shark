@@ -17,16 +17,16 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should create project" do
-    assert_difference('Project.count') do
-      post projects_url, params: { 
-        project: { 
-          name: "Test Project", 
+    assert_difference("Project.count") do
+      post projects_url, params: {
+        project: {
+          name: "Test Project",
           goal: "Test goal",
           tone: "polite_soft",
           status: "draft",
           max_responses: 50,
           limits: { max_turns: 12, max_deep: 2 }
-        } 
+        }
       }
     end
 
@@ -47,18 +47,18 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
 
   test "should update project" do
     project = Project.create!(name: "Test Project", max_responses: 50)
-    patch project_url(project), params: { 
-      project: { 
+    patch project_url(project), params: {
+      project: {
         name: "Updated Project",
         max_responses: 100
-      } 
+      }
     }
     assert_redirected_to project_path(project)
   end
 
   test "should destroy project" do
     project = Project.create!(name: "Test Project", max_responses: 50)
-    assert_difference('Project.count', -1) do
+    assert_difference("Project.count", -1) do
       delete project_url(project)
     end
 
@@ -67,10 +67,10 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
 
   test "should generate invite link" do
     project = Project.create!(name: "Test Project", max_responses: 50)
-    assert_difference('InviteLink.count', 1) do
+    assert_difference("InviteLink.count", 1) do
       post generate_invite_link_project_path(project)
     end
-    
+
     assert_redirected_to project_path(project)
     assert_equal project, InviteLink.last.project
   end
@@ -78,11 +78,11 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
   test "should not create duplicate invite link" do
     project = Project.create!(name: "Test Project", max_responses: 50)
     existing_link = project.invite_links.create!
-    
-    assert_no_difference('InviteLink.count') do
+
+    assert_no_difference("InviteLink.count") do
       post generate_invite_link_project_path(project)
     end
-    
+
     assert_redirected_to project_path(project)
     assert_equal existing_link, project.invite_links.first
   end
@@ -90,6 +90,6 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
   private
 
   def sign_in(admin)
-    post session_url, params: { email_address: admin.email_address, password: 'password123' }
+    post session_url, params: { email_address: admin.email_address, password: "password123" }
   end
 end

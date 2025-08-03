@@ -4,7 +4,7 @@ class StreamAssistantResponseJob < ApplicationJob
   def perform(conversation_id, user_message_id)
     conversation = Conversation.find(conversation_id)
     user_message = Message.find(user_message_id)
-    
+
     # Check if already in fallback mode or should use fallback
     if conversation.state == "fallback" || fallback_mode?(conversation)
       # Use regular orchestrator for fallback (no streaming needed)
@@ -20,7 +20,7 @@ class StreamAssistantResponseJob < ApplicationJob
       streaming_orchestrator.process_user_message_with_streaming(user_message)
     rescue LLM::Client::OpenAI::OpenAIError => e
       Rails.logger.error "LLM error in streaming job, falling back: #{e.message}"
-      
+
       # Fall back to regular orchestrator
       orchestrator = Interview::Orchestrator.new(conversation)
       response = orchestrator.process_user_message(user_message)

@@ -3,33 +3,33 @@ Rails.application.routes.draw do
     member do
       post :generate_invite_link
     end
-    
-    resources :insights, only: [:index, :show]
+
+    resources :insights, only: [ :index, :show ]
   end
   resource :session
   resources :passwords, param: :token
-  
+
   # Public invite link route
   get "i/:token", to: "invites#show", as: :invite
   post "i/:token/start", to: "invites#start", as: :invite_start
   get "i/:token/attributes", to: "invites#attributes", as: :invite_attributes
   post "i/:token/create_participant", to: "invites#create_participant", as: :invite_create_participant
-  
+
   # Conversations routes
-  resources :conversations, only: [:show] do
+  resources :conversations, only: [ :show ] do
     member do
       post :create_message
       post :skip
     end
   end
-  
+
   # Thank you page routes
   resources :projects, only: [] do
-    resource :thank_you, only: [:show] do
+    resource :thank_you, only: [ :show ] do
       post :restart
     end
   end
-  
+
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

@@ -8,7 +8,7 @@ class InsightsController < ApplicationController
     @insights = @project.insight_cards
                         .order(freq_conversations: :desc, freq_messages: :desc)
                         .limit(5)
-    
+
     @total_conversations = @project.conversations.where.not(finished_at: nil).count
   end
 

@@ -12,15 +12,15 @@ class LLM::Client::FakeTest < ActiveSupport::TestCase
       conversation_history: [],
       user_message: "Hello"
     )
-    
+
     assert response.present?
     assert response.is_a?(String)
   end
 
   test "cycles through responses" do
-    responses = ["First", "Second", "Third"]
+    responses = [ "First", "Second", "Third" ]
     client = LLM::Client::Fake.new(responses: responses)
-    
+
     assert_equal "First", client.generate_response(
       system_prompt: "", behavior_prompt: "", conversation_history: [], user_message: ""
     )
@@ -38,17 +38,17 @@ class LLM::Client::FakeTest < ActiveSupport::TestCase
 
   test "stream_chat yields chunks" do
     chunks = []
-    response = @client.stream_chat(messages: [{ role: "user", content: "Hello" }]) do |chunk|
+    response = @client.stream_chat(messages: [ { role: "user", content: "Hello" } ]) do |chunk|
       chunks << chunk
     end
-    
+
     assert chunks.any?
     assert_equal response, chunks.join
   end
 
   test "stream_chat without block returns full response" do
-    response = @client.stream_chat(messages: [{ role: "user", content: "Hello" }])
-    
+    response = @client.stream_chat(messages: [ { role: "user", content: "Hello" } ])
+
     assert response.present?
     assert response.is_a?(String)
   end

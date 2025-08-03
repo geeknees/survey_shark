@@ -12,24 +12,24 @@ class Analysis::ConversationAnalyzer
                                  .where(role: 0)
                                  .where.not(content: "[スキップ]")
                                  .pluck(:content)
-    
+
     return [] if user_messages.empty?
-    
+
     # Combine all user text
     combined_text = user_messages.join(" ")
-    
+
     # Step 1: Normalize text
     normalized_text = @text_processor.normalize(combined_text)
-    
+
     # Step 2: Tokenize (TinySegmenter)
     tokens = @text_processor.tokenize(normalized_text)
-    
+
     # Step 3: Extract keywords (RAKE)
     keywords = @keyword_extractor.extract_keywords(tokens)
-    
+
     # Step 4: LLM analysis for themes and summary
     llm_analysis = analyze_with_llm(normalized_text, keywords)
-    
+
     # Step 5: Build insights
     build_insights(llm_analysis, user_messages)
   end
@@ -38,7 +38,7 @@ class Analysis::ConversationAnalyzer
 
   def analyze_with_llm(text, keywords)
     prompt = build_analysis_prompt(text, keywords)
-    
+
     begin
       response = @llm_client.generate_response(
         system_prompt: system_prompt,
@@ -46,7 +46,7 @@ class Analysis::ConversationAnalyzer
         conversation_history: [],
         user_message: prompt
       )
-      
+
       parse_llm_analysis(response)
     rescue => e
       Rails.logger.error "LLM analysis failed: #{e.message}"
@@ -92,24 +92,24 @@ class Analysis::ConversationAnalyzer
 
   def parse_llm_analysis(response)
     themes = []
-    
+
     # Split response into theme blocks
     theme_blocks = response.split(/(?=THEME:)/).reject(&:empty?)
-    
+
     theme_blocks.each do |block|
       theme_data = {}
-      
-      theme_data[:theme] = extract_field(block, 'THEME')
-      theme_data[:jtbd] = extract_field(block, 'JTBD')
-      theme_data[:summary] = extract_field(block, 'SUMMARY')
-      theme_data[:severity] = extract_field(block, 'SEVERITY').to_i
-      
-      evidence_text = extract_field(block, 'EVIDENCE')
-      theme_data[:evidence] = evidence_text.split('|').map(&:strip).reject(&:empty?)
-      
+
+      theme_data[:theme] = extract_field(block, "THEME")
+      theme_data[:jtbd] = extract_field(block, "JTBD")
+      theme_data[:summary] = extract_field(block, "SUMMARY")
+      theme_data[:severity] = extract_field(block, "SEVERITY").to_i
+
+      evidence_text = extract_field(block, "EVIDENCE")
+      theme_data[:evidence] = evidence_text.split("|").map(&:strip).reject(&:empty?)
+
       themes << theme_data if theme_data[:theme].present?
     end
-    
+
     themes
   end
 
@@ -123,20 +123,20 @@ class Analysis::ConversationAnalyzer
 
   def fallback_analysis(text, keywords)
     # Simple fallback when LLM fails
-    [{
+    [ {
       theme: "ユーザーの課題",
       jtbd: "問題を解決したい",
       summary: text.truncate(100),
       severity: estimate_severity_heuristic(text),
-      evidence: [text.truncate(50)]
-    }]
+      evidence: [ text.truncate(50) ]
+    } ]
   end
 
   def estimate_severity_heuristic(text)
     # Simple heuristic based on negative words
     negative_words = %w[困る 大変 問題 エラー 失敗 遅い 重い 使えない だめ ひどい]
     strong_negative_words = %w[最悪 ひどすぎる 使い物にならない 全然だめ]
-    
+
     if strong_negative_words.any? { |word| text.include?(word) }
       5
     elsif negative_words.count { |word| text.include?(word) } >= 2

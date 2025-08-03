@@ -8,7 +8,7 @@ class CreateParticipants < ActiveRecord::Migration[8.0]
 
       t.timestamps
     end
-    
+
     add_index :participants, :anon_hash
   end
 end

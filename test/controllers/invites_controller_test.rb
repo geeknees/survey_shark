@@ -40,16 +40,16 @@ class InvitesControllerTest < ActionDispatch::IntegrationTest
   test "should auto-close project when max responses reached" do
     @project.update!(responses_count: 2) # One less than max
     assert_equal "active", @project.status
-    
+
     post invite_start_path(@invite_link.token)
-    
+
     @project.reload
     assert_equal 3, @project.responses_count
     assert_equal "closed", @project.status
   end
 
   test "should increment responses count on start" do
-    assert_difference('@project.reload.responses_count', 1) do
+    assert_difference("@project.reload.responses_count", 1) do
       post invite_start_path(@invite_link.token)
     end
     assert_redirected_to invite_attributes_path(@invite_link.token)
@@ -64,7 +64,7 @@ class InvitesControllerTest < ActionDispatch::IntegrationTest
   test "should handle over limit case by auto-closing" do
     @project.update!(responses_count: 3) # Already at max
     get invite_path(@invite_link.token)
-    
+
     @project.reload
     assert_equal "closed", @project.status
   end

@@ -42,7 +42,7 @@ class ProjectTest < ActiveSupport::TestCase
 
   test "status helper methods" do
     project = Project.new(name: "Test")
-    
+
     project.status = "draft"
     assert project.draft?
     assert_not project.active?

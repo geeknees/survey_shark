@@ -6,7 +6,7 @@ class ConversationsController < ApplicationController
     @messages = @conversation.messages.order(:created_at)
     @user_turn_count = @conversation.messages.where(role: 0).count
     @max_turns = @conversation.project.limits.dig("max_turns") || 12
-    @remaining_turns = [@max_turns - @user_turn_count, 0].max
+    @remaining_turns = [ @max_turns - @user_turn_count, 0 ].max
   end
 
   def create_message
@@ -24,7 +24,7 @@ class ConversationsController < ApplicationController
 
     # Enqueue streaming orchestration job
     StreamAssistantResponseJob.perform_later(@conversation.id, user_message.id)
-    
+
     redirect_to @conversation
   end
 
@@ -39,7 +39,7 @@ class ConversationsController < ApplicationController
 
     # Enqueue streaming orchestration job
     StreamAssistantResponseJob.perform_later(@conversation.id, user_message.id)
-    
+
     redirect_to @conversation
   end
 

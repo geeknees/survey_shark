@@ -8,7 +8,7 @@ class CreateInviteLinks < ActiveRecord::Migration[8.0]
 
       t.timestamps
     end
-    
+
     add_index :invite_links, :token, unique: true
   end
 end

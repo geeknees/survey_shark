@@ -20,7 +20,7 @@ class ConversationsControllerTest < ActionDispatch::IntegrationTest
       post create_message_conversation_path(@conversation), params: { content: "Hello world" }
     end
     assert_redirected_to conversation_path(@conversation)
-    
+
     message = Message.last
     assert_equal "Hello world", message.content
     assert_equal 0, message.role # user
@@ -37,7 +37,7 @@ class ConversationsControllerTest < ActionDispatch::IntegrationTest
   test "should truncate long messages to 500 characters" do
     long_content = "a" * 600
     post create_message_conversation_path(@conversation), params: { content: long_content }
-    
+
     message = Message.last
     assert_equal 500, message.content.length
   end
@@ -47,7 +47,7 @@ class ConversationsControllerTest < ActionDispatch::IntegrationTest
       post skip_conversation_path(@conversation)
     end
     assert_redirected_to conversation_path(@conversation)
-    
+
     message = Message.last
     assert_equal "[スキップ]", message.content
     assert_equal 0, message.role # user
@@ -56,10 +56,10 @@ class ConversationsControllerTest < ActionDispatch::IntegrationTest
   test "should show progress and remaining turns" do
     # Create some user messages
     3.times { |i| @conversation.messages.create!(role: 0, content: "Message #{i}") }
-    
+
     get conversation_path(@conversation)
     assert_response :success
-    
+
     # Check that progress shows (assuming default max_turns is 12)
     assert_select "div", text: /残り 9 ターン/
   end

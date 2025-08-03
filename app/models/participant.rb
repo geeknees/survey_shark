@@ -14,7 +14,7 @@ class Participant < ApplicationRecord
     return unless project&.custom_attributes&.any?
 
     project.custom_attributes.each do |attr|
-      if attr['required'] && (custom_attributes.nil? || custom_attributes[attr['key']].blank?)
+      if attr["required"] && (custom_attributes.nil? || custom_attributes[attr["key"]].blank?)
         errors.add(:base, "#{attr['label']}は必須項目です")
       end
     end

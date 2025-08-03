@@ -7,7 +7,7 @@ class Analysis::FakeLLMClient
   def generate_response(system_prompt:, behavior_prompt:, conversation_history:, user_message:)
     response = @responses[@call_count % @responses.length]
     @call_count += 1
-    
+
     # Extract text from the analysis prompt to make response more relevant
     if user_message.include?("コンピューター") || user_message.include?("パソコン")
       computer_response

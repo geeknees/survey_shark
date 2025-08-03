@@ -15,8 +15,8 @@ class InvitesAttributesTest < ActionDispatch::IntegrationTest
   end
 
   test "should create participant with valid age" do
-    assert_difference('Participant.count', 1) do
-      assert_difference('Conversation.count', 1) do
+    assert_difference("Participant.count", 1) do
+      assert_difference("Conversation.count", 1) do
         post invite_create_participant_path(@invite_link.token), params: {
           participant: { age: 25 }
         }
@@ -38,7 +38,7 @@ class InvitesAttributesTest < ActionDispatch::IntegrationTest
   end
 
   test "should create participant with blank age" do
-    assert_difference('Participant.count', 1) do
+    assert_difference("Participant.count", 1) do
       post invite_create_participant_path(@invite_link.token), params: {
         participant: { age: "" }
       }
@@ -49,7 +49,7 @@ class InvitesAttributesTest < ActionDispatch::IntegrationTest
   end
 
   test "should reject invalid age" do
-    assert_no_difference('Participant.count') do
+    assert_no_difference("Participant.count") do
       post invite_create_participant_path(@invite_link.token), params: {
         participant: { age: 150 }
       }
@@ -59,7 +59,7 @@ class InvitesAttributesTest < ActionDispatch::IntegrationTest
   end
 
   test "should reject negative age" do
-    assert_no_difference('Participant.count') do
+    assert_no_difference("Participant.count") do
       post invite_create_participant_path(@invite_link.token), params: {
         participant: { age: -5 }
       }
@@ -71,26 +71,26 @@ class InvitesAttributesTest < ActionDispatch::IntegrationTest
     # Mock custom attributes for this test
     @project.define_singleton_method(:custom_attributes) do
       [
-        { 'key' => 'occupation', 'label' => '職業', 'required' => false },
-        { 'key' => 'department', 'label' => '部署', 'required' => true }
+        { "key" => "occupation", "label" => "職業", "required" => false },
+        { "key" => "department", "label" => "部署", "required" => true }
       ]
     end
 
-    assert_difference('Participant.count', 1) do
+    assert_difference("Participant.count", 1) do
       post invite_create_participant_path(@invite_link.token), params: {
-        participant: { 
+        participant: {
           age: 30,
           custom_attributes: {
-            'occupation' => 'Engineer',
-            'department' => 'Development'
+            "occupation" => "Engineer",
+            "department" => "Development"
           }
         }
       }
     end
 
     participant = Participant.last
-    assert_equal 'Engineer', participant.custom_attributes['occupation']
-    assert_equal 'Development', participant.custom_attributes['department']
+    assert_equal "Engineer", participant.custom_attributes["occupation"]
+    assert_equal "Development", participant.custom_attributes["department"]
   end
 
   # TODO: Re-enable when custom attributes are fully implemented
@@ -98,7 +98,7 @@ class InvitesAttributesTest < ActionDispatch::IntegrationTest
   #   # Create a new project instance for this test to avoid interference
   #   test_project = Project.create!(name: "Test Project", status: "active", max_responses: 3)
   #   test_invite_link = test_project.invite_links.create!
-  #   
+  #
   #   # Mock custom attributes with required field
   #   test_project.define_singleton_method(:custom_attributes) do
   #     [{ 'key' => 'department', 'label' => '部署', 'required' => true }]
@@ -106,7 +106,7 @@ class InvitesAttributesTest < ActionDispatch::IntegrationTest
   #
   #   assert_no_difference('Participant.count') do
   #     post invite_create_participant_path(test_invite_link.token), params: {
-  #       participant: { 
+  #       participant: {
   #         age: 30,
   #         custom_attributes: { 'department' => '' }
   #       }

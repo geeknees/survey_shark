@@ -13,7 +13,7 @@ class PII::FakeLLMClientTest < ActiveSupport::TestCase
       conversation_history: [],
       user_message: prompt
     )
-    
+
     assert_includes response, "PII_DETECTED: true"
     assert_includes response, "MASKED_TEXT:"
     assert_includes response, "[氏名]"
@@ -28,7 +28,7 @@ class PII::FakeLLMClientTest < ActiveSupport::TestCase
       conversation_history: [],
       user_message: prompt
     )
-    
+
     assert_includes response, "PII_DETECTED: true"
     assert_includes response, "[電話番号]"
     assert_includes response, "DETECTED_ITEMS: 電話番号"
@@ -42,7 +42,7 @@ class PII::FakeLLMClientTest < ActiveSupport::TestCase
       conversation_history: [],
       user_message: prompt
     )
-    
+
     assert_includes response, "PII_DETECTED: false"
     assert_includes response, "DETECTED_ITEMS: なし"
   end
@@ -55,7 +55,7 @@ class PII::FakeLLMClientTest < ActiveSupport::TestCase
       conversation_history: [],
       user_message: prompt
     )
-    
+
     assert_includes response, "PII_DETECTED: true"
     assert_includes response, "[氏名]"
     assert_includes response, "[電話番号]"
@@ -70,7 +70,7 @@ class PII::FakeLLMClientTest < ActiveSupport::TestCase
       conversation_history: [],
       user_message: prompt
     )
-    
+
     assert_includes response, "PII_DETECTED: true"
     assert_includes response, "[メールアドレス]"
     assert_includes response, "メールアドレス"
@@ -84,7 +84,7 @@ class PII::FakeLLMClientTest < ActiveSupport::TestCase
       conversation_history: [],
       user_message: prompt
     )
-    
+
     assert_includes response, "PII_DETECTED: true"
     assert_includes response, "[会社名]"
     assert_includes response, "会社名"
@@ -98,7 +98,7 @@ class PII::FakeLLMClientTest < ActiveSupport::TestCase
       conversation_history: [],
       user_message: prompt
     )
-    
+
     assert_includes response, "PII_DETECTED: true"
     assert_includes response, "[学校名]"
     assert_includes response, "学校名"

@@ -6,7 +6,7 @@ class Interview::PromptBuilder
   def system_prompt
     tone = @project.tone || "polite_soft"
     max_deep = @project.limits.dig("max_deep") || 2
-    
+
     <<~PROMPT
       あなたは優しく丁寧なインタビュアーです。以下のルールに従って会話を進めてください：
 
@@ -68,13 +68,13 @@ class Interview::PromptBuilder
 
   def must_ask_constraints
     return "" if @project.must_ask.blank?
-    
+
     "## 必ず聞くべき項目\n" + @project.must_ask.map { |item| "- #{item}" }.join("\n")
   end
 
   def never_ask_constraints
     return "" if @project.never_ask.blank?
-    
+
     "## 聞いてはいけない項目\n" + @project.never_ask.map { |item| "- #{item}" }.join("\n")
   end
 end

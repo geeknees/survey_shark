@@ -6,7 +6,7 @@ class PII::Detector
   def analyze(text)
     # Use LLM to detect PII
     prompt = build_detection_prompt(text)
-    
+
     begin
       response = @llm_client.generate_response(
         system_prompt: system_prompt,
@@ -14,7 +14,7 @@ class PII::Detector
         conversation_history: [],
         user_message: prompt
       )
-      
+
       parse_llm_response(text, response)
     rescue => e
       Rails.logger.error "PII detection failed: #{e.message}"
@@ -69,21 +69,21 @@ class PII::Detector
   def parse_llm_response(original_text, response)
     # Parse the structured response from LLM
     pii_detected = response.include?("PII_DETECTED: true")
-    
+
     # Extract masked text
     masked_text = if response =~ /MASKED_TEXT: (.+?)(?:\n|$)/m
       $1.strip
     else
       original_text
     end
-    
+
     # Extract detected items
     detected_items = if response =~ /DETECTED_ITEMS: (.+?)(?:\n|$)/m
       $1.strip.split(/[,、]/).map(&:strip).reject(&:empty?)
     else
       []
     end
-    
+
     PII::DetectionResult.new(original_text, pii_detected, masked_text, detected_items)
   end
 

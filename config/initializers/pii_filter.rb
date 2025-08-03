@@ -8,7 +8,7 @@ Rails.application.configure do
     :user_agent,        # May contain identifying information
     :ip                 # IP addresses are PII
   ]
-  
+
   # Custom log filter to mask PII in message content
   config.log_tags = [
     lambda do |request|
@@ -30,9 +30,9 @@ class PIILogFilter
       message.content # Already masked
     elsif message.is_a?(String)
       # Simple filtering for string content
-      message.gsub(/田中|佐藤|山田|鈴木|高橋/, '[氏名]')
-             .gsub(/\d{2,4}-\d{2,4}-\d{4}/, '[電話番号]')
-             .gsub(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/, '[メールアドレス]')
+      message.gsub(/田中|佐藤|山田|鈴木|高橋/, "[氏名]")
+             .gsub(/\d{2,4}-\d{2,4}-\d{4}/, "[電話番号]")
+             .gsub(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/, "[メールアドレス]")
     else
       message
     end
@@ -41,7 +41,7 @@ end
 
 # Monkey patch ActiveRecord logging to filter PII
 if Rails.env.production?
-  ActiveRecord::Base.logger = ActiveSupport::Logger.new(Rails.root.join('log', 'production.log'))
+  ActiveRecord::Base.logger = ActiveSupport::Logger.new(Rails.root.join("log", "production.log"))
   ActiveRecord::Base.logger.formatter = proc do |severity, datetime, progname, msg|
     filtered_msg = if msg.include?('INSERT INTO "messages"') || msg.include?('UPDATE "messages"')
       msg.gsub(/'([^']*田中[^']*|[^']*佐藤[^']*|[^']*\d{2,4}-\d{2,4}-\d{4}[^']*)'/, "'[FILTERED_PII]'")

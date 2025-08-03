@@ -6,20 +6,20 @@ class Analysis::ConversationAnalyzerTest < ActiveSupport::TestCase
     @participant = participants(:one)
     @conversation = conversations(:one)
     @conversation.update!(finished_at: Time.current)
-    
+
     # Add test messages
     @conversation.messages.create!(role: :user, content: "コンピューターが遅くて困っています")
     @conversation.messages.create!(role: :user, content: "作業効率が悪くて大変です")
     @conversation.messages.create!(role: :assistant, content: "詳しく教えてください")
-    
+
     @analyzer = Analysis::ConversationAnalyzer.new(@conversation, llm_client: Analysis::FakeLLMClient.new)
   end
 
   test "analyzes conversation and returns insights" do
     insights = @analyzer.analyze
-    
+
     assert insights.any?
-    
+
     insight = insights.first
     assert insight.theme.present?
     assert insight.jtbd.present?
@@ -30,7 +30,7 @@ class Analysis::ConversationAnalyzerTest < ActiveSupport::TestCase
 
   test "ignores assistant messages" do
     insights = @analyzer.analyze
-    
+
     # Should only count user messages (excluding skip messages)
     expected_message_count = @conversation.messages.where(role: 0).where.not(content: "[スキップ]").count
     assert_equal expected_message_count, insights.first.message_frequency
@@ -38,9 +38,9 @@ class Analysis::ConversationAnalyzerTest < ActiveSupport::TestCase
 
   test "ignores skip messages" do
     @conversation.messages.create!(role: :user, content: "[スキップ]")
-    
+
     insights = @analyzer.analyze
-    
+
     # Skip message should not be counted
     expected_message_count = @conversation.messages.where(role: 0).where.not(content: "[スキップ]").count
     assert_equal expected_message_count, insights.first.message_frequency
@@ -48,9 +48,9 @@ class Analysis::ConversationAnalyzerTest < ActiveSupport::TestCase
 
   test "returns empty array for conversations with no user messages" do
     @conversation.messages.where(role: 0).destroy_all
-    
+
     insights = @analyzer.analyze
-    
+
     assert_empty insights
   end
 
@@ -60,10 +60,10 @@ class Analysis::ConversationAnalyzerTest < ActiveSupport::TestCase
         raise "LLM Error"
       end
     end
-    
+
     analyzer = Analysis::ConversationAnalyzer.new(@conversation, llm_client: error_client.new)
     insights = analyzer.analyze
-    
+
     # Should return fallback analysis
     assert insights.any?
     assert_equal "ユーザーの課題", insights.first.theme
@@ -77,9 +77,9 @@ class Analysis::ConversationAnalyzerTest < ActiveSupport::TestCase
   test "processes computer-related content appropriately" do
     @conversation.messages.where(role: 0).destroy_all
     @conversation.messages.create!(role: :user, content: "パソコンが重くて困っています")
-    
+
     insights = @analyzer.analyze
-    
+
     assert insights.any?
     insight = insights.first
     assert_includes insight.theme, "コンピューター"
@@ -88,9 +88,9 @@ class Analysis::ConversationAnalyzerTest < ActiveSupport::TestCase
   test "processes work-related content appropriately" do
     @conversation.messages.where(role: 0).destroy_all
     @conversation.messages.create!(role: :user, content: "仕事の効率が悪いです")
-    
+
     insights = @analyzer.analyze
-    
+
     assert insights.any?
     insight = insights.first
     assert_includes insight.theme, "業務"

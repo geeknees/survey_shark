@@ -17,10 +17,10 @@ class Interview::FallbackOrchestrator
     )
 
     question_number = determine_question_number
-    
+
     if question_number <= FALLBACK_QUESTIONS.length
       assistant_content = FALLBACK_QUESTIONS[question_number - 1]
-      
+
       # Create assistant message
       @conversation.messages.create!(
         role: 1, # assistant
@@ -29,17 +29,17 @@ class Interview::FallbackOrchestrator
     else
       # All questions asked, finish conversation
       assistant_content = "ご協力いただき、ありがとうございました。貴重なお話をお聞かせいただけました。"
-      
+
       @conversation.messages.create!(
         role: 1, # assistant
         content: assistant_content
       )
-      
+
       @conversation.update!(
         state: "done",
         finished_at: Time.current
       )
-      
+
       # Enqueue analysis job for finished conversation
       AnalyzeConversationJob.perform_later(@conversation.id)
     end
@@ -55,7 +55,7 @@ class Interview::FallbackOrchestrator
                                      .where(role: 0)
                                      .where.not(content: "[スキップ]")
                                      .count
-    
+
     # Return the next question number (1-indexed)
     user_messages_count
   end

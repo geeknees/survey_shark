@@ -34,7 +34,7 @@ class Interview::StreamingOrchestrator
       messages: build_llm_messages(system_prompt, behavior_prompt, messages, user_message.content)
     ) do |chunk|
       accumulated_content += chunk
-      
+
       # Create assistant message on first chunk
       if assistant_message.nil?
         assistant_message = @conversation.messages.create!(
@@ -70,7 +70,7 @@ class Interview::StreamingOrchestrator
     # Same logic as regular orchestrator
     current_state = @conversation.state
     max_deep = @project.limits.dig("max_deep") || 2
-    
+
     case current_state
     when "intro"
       "enumerate"
@@ -110,21 +110,21 @@ class Interview::StreamingOrchestrator
 
   def build_llm_messages(system_prompt, behavior_prompt, conversation_history, user_message)
     messages = []
-    
+
     if system_prompt.present?
       messages << { role: "system", content: system_prompt }
     end
-    
+
     conversation_history.each do |msg|
       messages << { role: msg[:role], content: msg[:content] }
     end
-    
+
     if behavior_prompt.present?
       messages << { role: "system", content: behavior_prompt }
     end
-    
+
     messages << { role: "user", content: user_message }
-    
+
     messages
   end
 
@@ -134,7 +134,7 @@ class Interview::StreamingOrchestrator
   end
 
   def user_indicates_completion?(content)
-    completion_indicators = ["以上", "それだけ", "終わり", "ない", "特にない"]
+    completion_indicators = [ "以上", "それだけ", "終わり", "ない", "特にない" ]
     completion_indicators.any? { |indicator| content.include?(indicator) }
   end
 
@@ -142,7 +142,7 @@ class Interview::StreamingOrchestrator
     messages_since_deepening = @conversation.messages.where(role: 0)
                                                    .where("created_at > ?", 5.minutes.ago)
                                                    .count
-    [messages_since_deepening - 1, 0].max
+    [ messages_since_deepening - 1, 0 ].max
   end
 
   def identify_most_important_pain_point
@@ -154,7 +154,7 @@ class Interview::StreamingOrchestrator
     user_messages = @conversation.messages.where(role: 0)
                                          .where.not(content: "[スキップ]")
                                          .pluck(:content)
-    
+
     if user_messages.any?
       "主な課題: #{user_messages.join('、')}"
     else

@@ -1,6 +1,6 @@
 class Interview::Orchestrator
   STATES = %w[intro enumerate recommend choose deepening summary_check done].freeze
-  
+
   def initialize(conversation, llm_client: nil)
     @conversation = conversation
     @project = conversation.project
@@ -21,7 +21,7 @@ class Interview::Orchestrator
 
       # Generate assistant response
       assistant_content = generate_assistant_response(next_state, user_message)
-      
+
       # Create assistant message
       @conversation.messages.create!(
         role: 1, # assistant
@@ -31,10 +31,10 @@ class Interview::Orchestrator
       # Check if conversation is complete
       if next_state == "done"
         @conversation.update!(finished_at: Time.current)
-        
+
         # Enqueue analysis job for finished conversation
         AnalyzeConversationJob.perform_later(@conversation.id)
-        
+
         # Store participant data in session for potential restart
         if @conversation.participant
           session[:participant_age] = @conversation.participant.age
@@ -45,7 +45,7 @@ class Interview::Orchestrator
       assistant_content
     rescue LLM::Client::OpenAI::OpenAIError => e
       Rails.logger.error "LLM error, switching to fallback mode: #{e.message}"
-      
+
       # Switch to fallback mode
       Interview::FallbackOrchestrator.new(@conversation).process_user_message(user_message)
     end
@@ -57,7 +57,7 @@ class Interview::Orchestrator
     current_state = @conversation.state
     user_turn_count = @conversation.messages.where(role: 0).count
     max_deep = @project.limits.dig("max_deep") || 2
-    
+
     case current_state
     when "intro"
       # After intro, move to enumerate phase
@@ -133,7 +133,7 @@ class Interview::Orchestrator
   end
 
   def user_indicates_completion?(content)
-    completion_indicators = ["以上", "それだけ", "終わり", "ない", "特にない"]
+    completion_indicators = [ "以上", "それだけ", "終わり", "ない", "特にない" ]
     completion_indicators.any? { |indicator| content.include?(indicator) }
   end
 
@@ -143,7 +143,7 @@ class Interview::Orchestrator
     messages_since_deepening = @conversation.messages.where(role: 0)
                                                    .where("created_at > ?", 5.minutes.ago)
                                                    .count
-    [messages_since_deepening - 1, 0].max
+    [ messages_since_deepening - 1, 0 ].max
   end
 
   def identify_most_important_pain_point
@@ -156,7 +156,7 @@ class Interview::Orchestrator
     user_messages = @conversation.messages.where(role: 0)
                                          .where.not(content: "[スキップ]")
                                          .pluck(:content)
-    
+
     if user_messages.any?
       "主な課題: #{user_messages.join('、')}"
     else

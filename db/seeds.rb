@@ -51,10 +51,10 @@ if Rails.env.development? && sample_project.conversations.empty?
   3.times do |i|
     participant = sample_project.participants.create!(
       anon_hash: Digest::SHA256.hexdigest("sample-#{i}-#{Time.current.to_f}"),
-      age: [25, 35, 45][i],
+      age: [ 25, 35, 45 ][i],
       custom_attributes: {}
     )
-    
+
     conversation = sample_project.conversations.create!(
       participant: participant,
       state: "done",
@@ -63,7 +63,7 @@ if Rails.env.development? && sample_project.conversations.empty?
       ip: "127.0.0.1",
       user_agent: "Sample Browser"
     )
-    
+
     # Add sample messages
     conversation.messages.create!(role: 0, content: "コンピューターの動作が遅くて困っています")
     conversation.messages.create!(role: 1, content: "詳しく教えてください")
@@ -71,7 +71,7 @@ if Rails.env.development? && sample_project.conversations.empty?
     conversation.messages.create!(role: 1, content: "他にも困っていることはありますか？")
     conversation.messages.create!(role: 0, content: "ソフトウェアの操作が複雑で使いにくいです")
   end
-  
+
   # Create sample insight cards
   sample_project.insight_cards.create!(
     theme: "システムパフォーマンス",
@@ -80,9 +80,9 @@ if Rails.env.development? && sample_project.conversations.empty?
     freq_conversations: 2,
     freq_messages: 4,
     confidence_label: "H",
-    evidence: ["コンピューターの動作が遅い", "起動時に時間がかかる"]
+    evidence: [ "コンピューターの動作が遅い", "起動時に時間がかかる" ]
   )
-  
+
   sample_project.insight_cards.create!(
     theme: "ユーザビリティ",
     jtbds: "直感的にソフトウェアを使いたい",
@@ -90,8 +90,8 @@ if Rails.env.development? && sample_project.conversations.empty?
     freq_conversations: 1,
     freq_messages: 2,
     confidence_label: "M",
-    evidence: ["操作が複雑", "使いにくい"]
+    evidence: [ "操作が複雑", "使いにくい" ]
   )
-  
+
   puts "Created sample conversations and insights for development"
 end
