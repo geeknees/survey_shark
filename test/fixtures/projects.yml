@@ -1,14 +1,15 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
 one:
-  name: MyString
-  goal: MyText
-  must_ask: 
-  never_ask: 
-  tone: MyString
-  limits: 
-  status: MyString
-  max_responses: 1
+  name: Test Project
+  goal: Test survey goal
+  must_ask: []
+  never_ask: []
+  tone: polite_soft
+  limits: {"max_turns": 12, "max_deep": 2}
+  status: active
+  max_responses: 50
+  responses_count: 0
 
 two:
   name: MyString

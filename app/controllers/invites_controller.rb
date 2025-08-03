@@ -36,12 +36,11 @@ class InvitesController < ApplicationController
         state: "intro",
         started_at: Time.current,
         ip: request.remote_ip,
-        user_agent: request.user_agent
+        user_agent: request.user_agent || "Unknown"
       )
       
-      # For now, redirect back with success (chat page will come in next prompt)
-      redirect_to invite_attributes_path(@invite_link.token), 
-                  notice: "属性情報を保存しました。チャット画面は次のプロンプトで実装されます。"
+      # Redirect to chat page
+      redirect_to conversation_path(@conversation)
     else
       render :attributes, status: :unprocessable_entity
     end
