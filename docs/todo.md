@@ -1,6 +1,6 @@
 - [x] アンケートの最初に質問が表示されない
 - [x] gem "ruby-openai" への移行
-- [ ] AIからのレスポンスがない
+- [x] AIからのレスポンスがない
 - [ ] ターンが終わっても回答を続けられる（終了しない）
 - [ ] プロジェクトの削除ができない
 - [ ] Fix error: No route matches [GET] "/conversations/2/skip"

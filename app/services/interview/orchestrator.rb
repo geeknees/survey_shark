@@ -188,6 +188,7 @@ module Interview
 
   def default_llm_client
     if Rails.env.test?
+      require_relative "../llm/client/fake"
       LLM::Client::Fake.new
     else
       LLM::Client::OpenAI.new

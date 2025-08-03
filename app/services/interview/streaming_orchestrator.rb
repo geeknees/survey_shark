@@ -1,9 +1,9 @@
 module Interview
   class StreamingOrchestrator
-    def initialize(conversation, llm_client: nil)
-      @conversation = conversation
-      @project = conversation.project
-      @llm_client = llm_client || LLM::Client::OpenAI.new
+  def initialize(conversation, llm_client: nil)
+    @conversation = conversation
+    @project = conversation.project
+    @llm_client = llm_client || LLM::Client::OpenAI.new
     @prompt_builder = Interview::PromptBuilder.new(@project)
   end
 
