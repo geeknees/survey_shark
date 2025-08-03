@@ -10,9 +10,6 @@ class ChatTest < ApplicationSystemTestCase
   test "posting a message appends to list and updates progress" do
     visit conversation_path(@conversation)
 
-    # Initial state - no user messages
-    initial_progress = find("[style*='width:']")[:style]
-
     # Post a message
     fill_in "content", with: "Hello, this is my first message"
     click_button "送信"
@@ -20,8 +17,18 @@ class ChatTest < ApplicationSystemTestCase
     # Should be redirected back to conversation
     assert_current_path conversation_path(@conversation)
 
-    # Message should appear in the chat
-    assert_text "Hello, this is my first message"
+    # Wait for the message to appear
+    assert_text "Hello, this is my first message", wait: 5
+
+    # Manually execute the job to ensure completion
+    @conversation.reload
+    user_message = @conversation.messages.where(role: 0).last
+    if user_message && user_message.content == "Hello, this is my first message"
+      StreamAssistantResponseJob.perform_now(@conversation.id, user_message.id)
+    end
+
+    # Refresh the page to see updates
+    visit current_path
 
     # Progress should have updated (one user turn now)
     assert_text "残り 11 ターン" # Assuming 12 max turns

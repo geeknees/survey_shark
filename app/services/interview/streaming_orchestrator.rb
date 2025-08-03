@@ -72,6 +72,13 @@ module Interview
             role: 1, # assistant
             content: chunk
           )
+          # Broadcast the new message to the messages list
+          Turbo::StreamsChannel.broadcast_append_to(
+            @conversation,
+            target: "messages",
+            partial: "conversations/message",
+            locals: { message: assistant_message }
+          )
         else
           # Update existing message
           assistant_message.update!(content: accumulated_content)
@@ -202,17 +209,25 @@ module Interview
 
     def test_llm_client
       Class.new do
-        def chat_stream(messages:, model: nil, temperature: nil)
+        def stream_chat(messages:, **opts, &block)
           # Check if we should simulate an error for testing
           if ENV["SIMULATE_LLM_ERROR"] == "true"
             raise LLM::Client::OpenAI::OpenAIError.new("Simulated error for testing")
           end
 
-          # Return a mock stream for tests
-          [
-            { "choices" => [ { "delta" => { "content" => "Mock response" } } ] },
-            { "choices" => [ { "delta" => { "content" => "" }, "finish_reason" => "stop" } ] }
-          ].each
+          # Return a mock response for tests
+          response = "Test response from assistant"
+
+          if block_given?
+            # Simulate streaming by yielding chunks
+            words = response.split(" ")
+            words.each_with_index do |word, index|
+              chunk = index == words.length - 1 ? word : "#{word} "
+              yield(chunk)
+            end
+          end
+
+          response
         end
       end.new
     end

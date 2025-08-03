@@ -11,11 +11,12 @@ module Interview
       return if Time.current - @last_broadcast_time < @debounce_interval
 
       begin
-        # Use a unique target for streaming content to avoid conflicts
-        Turbo::StreamsChannel.broadcast_append_to(
+        # Update the entire message instead of streaming to a non-existent target
+        Turbo::StreamsChannel.broadcast_replace_to(
           @conversation,
-          target: "streaming-content-#{message.id}",
-          content: chunk
+          target: "message_#{message.id}",
+          partial: "conversations/message",
+          locals: { message: message }
         )
         @last_broadcast_time = Time.current
       rescue => e
