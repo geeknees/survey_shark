@@ -14,24 +14,26 @@ class ConversationsController < ApplicationController
     return redirect_to @conversation if content.blank?
 
     # Create user message
-    @conversation.messages.create!(
+    user_message = @conversation.messages.create!(
       role: 0, # user
       content: content.truncate(500)
     )
 
-    # TODO: Enqueue orchestration job in next prompt
+    # Enqueue orchestration job
+    OrchestrateInterviewJob.perform_later(@conversation.id, user_message.id)
     
     redirect_to @conversation
   end
 
   def skip
     # Create skip message
-    @conversation.messages.create!(
+    user_message = @conversation.messages.create!(
       role: 0, # user
       content: "[スキップ]"
     )
 
-    # TODO: Enqueue orchestration job in next prompt
+    # Enqueue orchestration job
+    OrchestrateInterviewJob.perform_later(@conversation.id, user_message.id)
     
     redirect_to @conversation
   end

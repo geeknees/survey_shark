@@ -321,7 +321,7 @@ Run tests.
 
 ⸻
 
-Prompt 7 — Chat shell (Turbo Streams, progress, skip)
+Prompt 7 — Chat shell (Turbo Streams, progress, skip) ✅ COMPLETED
 
 Implement chat UI:
 - Conversations#show displays message list with Turbo Stream updates, progress bar + remaining turns text.
@@ -336,7 +336,7 @@ Run tests.
 
 ⸻
 
-Prompt 8 — Orchestrator skeleton with Fake LLM (no OpenAI yet)
+Prompt 8 — Orchestrator skeleton with Fake LLM (no OpenAI yet) ✅ COMPLETED
 
 Create Interview::PromptBuilder and Interview::Orchestrator.
 - PromptBuilder builds system+behavior rules (non-leading, 1-question-per-turn, gentle Keigo, max_deep=2, etc.).

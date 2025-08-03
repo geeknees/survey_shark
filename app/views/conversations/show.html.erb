@@ -19,21 +19,8 @@
 
     <!-- Messages Container -->
     <div class="p-4">
-      <div id="messages" class="space-y-4 mb-6 min-h-[200px]">
-        <%= turbo_stream_from @conversation %>
-        
-        <% @messages.each do |message| %>
-          <div class="<%= message.user? ? 'flex justify-end' : 'flex justify-start' %>">
-            <div class="<%= message.user? ? 'bg-blue-500 text-white ml-12' : 'bg-gray-100 text-gray-900 mr-12' %> 
-                        rounded-lg px-4 py-2 max-w-prose">
-              <div class="whitespace-pre-wrap"><%= message.content %></div>
-              <div class="text-xs opacity-70 mt-1">
-                <%= message.created_at.strftime("%H:%M") %>
-              </div>
-            </div>
-          </div>
-        <% end %>
-      </div>
+      <%= turbo_stream_from @conversation %>
+      <%= render "messages", messages: @messages %>
 
       <!-- Message Composer -->
       <div class="border-t pt-4" data-controller="chat-composer">
