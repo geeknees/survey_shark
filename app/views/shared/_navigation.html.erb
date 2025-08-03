@@ -19,6 +19,8 @@
               <span class="text-sm text-gray-700">
                 <%= current_admin&.email_address %>
               </span>
+              <%= link_to "Change Password", edit_password_admin_path(current_admin),
+                  class: "text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium" %>
               <%= link_to "Sign out", session_path,
                   data: { "turbo-method": "delete" },
                   class: "text-gray-700 hover:text-red-600 px-3 py-2 rounded-md text-sm font-medium" %>
@@ -58,6 +60,8 @@
             <p class="text-sm text-gray-500">
               <%= current_admin&.email_address %>
             </p>
+            <%= link_to "Change Password", edit_password_admin_path(current_admin),
+                class: "text-gray-700 hover:text-blue-600 block px-3 py-2 rounded-md text-base font-medium" %>
             <%= link_to "Sign out", session_path,
                 data: { "turbo-method": "delete" },
                 class: "text-gray-700 hover:text-red-600 block px-3 py-2 rounded-md text-base font-medium" %>

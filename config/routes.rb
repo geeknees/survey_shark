@@ -9,6 +9,12 @@ Rails.application.routes.draw do
   end
   resource :session
   resources :passwords, param: :token
+  resources :admins, only: [] do
+    member do
+      get :edit_password
+      patch :update_password
+    end
+  end
 
   # Public invite link route
   get "i/:token", to: "invites#show", as: :invite
