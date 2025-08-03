@@ -72,8 +72,12 @@ module Interview
 
     case current_state
     when "intro"
-      # After intro, move to enumerate phase
-      "enumerate"
+      # Stay in intro for the initial system message, move to enumerate after user's first real response
+      if user_message.content == "[インタビュー開始]"
+        "intro"  # Stay in intro state for initial greeting
+      else
+        "enumerate"  # Move to enumerate after user's first response
+      end
     when "enumerate"
       # Check if we have enough pain points (up to 3) or user indicates they're done
       pain_points = extract_pain_points_from_conversation
@@ -141,7 +145,8 @@ module Interview
   def extract_pain_points_from_conversation
     # Simple extraction - in real implementation this would be more sophisticated
     user_messages = @conversation.messages.where(role: 0).pluck(:content)
-    user_messages.reject { |msg| msg == "[スキップ]" }
+    # Exclude system messages and skip messages
+    user_messages.reject { |msg| msg == "[スキップ]" || msg == "[インタビュー開始]" }
   end
 
   def user_indicates_completion?(content)

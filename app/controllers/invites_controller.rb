@@ -39,6 +39,15 @@ class InvitesController < ApplicationController
         user_agent: request.user_agent || "Unknown"
       )
 
+      # Create initial system message to trigger AI's first question
+      initial_message = @conversation.messages.create!(
+        role: 0, # user
+        content: "[インタビュー開始]"
+      )
+
+      # Start the interview with the initial message
+      StreamAssistantResponseJob.perform_later(@conversation.id, initial_message.id)
+
       # Redirect to chat page
       redirect_to conversation_path(@conversation)
     else
