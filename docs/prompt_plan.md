@@ -404,7 +404,7 @@ Run tests.
 
 ⸻
 
-Prompt 12 — KPIs, seeds, closing behavior, “もう一度回答”
+Prompt 12 — KPIs, seeds, closing behavior, “もう一度回答” ✅ COMPLETED
 
 Add KPIs to project show:
 - 総回答/上限/残り枠
