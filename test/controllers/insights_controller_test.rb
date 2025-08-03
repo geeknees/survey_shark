@@ -81,13 +81,13 @@ class InsightsControllerTest < ActionDispatch::IntegrationTest
 
   test "handles non-existent project" do
     assert_raises(ActiveRecord::RecordNotFound) do
-      get project_insights_path(id: 999999)
+      get project_insights_path(project_id: 999999)
     end
   end
 
   test "handles non-existent insight" do
     assert_raises(ActiveRecord::RecordNotFound) do
-      get project_insight_path(@project, id: 999999)
+      get project_insight_path(@project, 999999)
     end
   end
 end

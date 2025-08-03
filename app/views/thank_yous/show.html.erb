@@ -1,0 +1,22 @@
+<div class="max-w-2xl mx-auto p-6">
+  <div class="text-center">
+    <h1 class="text-3xl font-bold text-gray-900 mb-4">ご協力ありがとうございました</h1>
+
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+      <h2 class="text-lg font-semibold text-blue-900 mb-2">プロジェクト: <%= @project.name %></h2>
+      <p class="text-blue-700">貴重なご意見をいただき、誠にありがとうございました。</p>
+    </div>
+
+    <% if @project.active? && @project.responses_count < @project.max_responses %>
+      <div class="mt-6">
+        <%= form_with url: restart_project_thank_you_path(@project), method: :post, local: true do |form| %>
+          <%= form.submit "もう一度回答する", class: "bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition duration-200" %>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mt-6">
+        <p class="text-gray-700 font-medium">募集は終了しました</p>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -21,7 +21,25 @@ module ActiveSupport
 
     # Add more helper methods to be used by all tests here...
     def sign_in_as(admin)
-      cookies.encrypted[:session_token] = admin.sessions.create!.token
+      if respond_to?(:post) # Integration test
+        post session_path, params: {
+          email_address: admin.email_address,
+          password: "password123" # This matches the password in fixtures
+        }
+      else
+        # For unit tests, set up session directly
+        @current_session = admin.sessions.create!
+        Current.session = @current_session
+      end
+    end
+
+    def sign_out
+      if respond_to?(:delete) # Integration test
+        delete session_path
+      else
+        Current.session = nil
+        @current_session = nil
+      end
     end
   end
 end

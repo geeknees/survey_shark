@@ -1,6 +1,8 @@
+require_relative "base"
+
 module LLM
   module Client
-    class Fake
+    class Fake < Base
       def initialize(responses: nil)
         @responses = responses || default_responses
         @call_count = 0

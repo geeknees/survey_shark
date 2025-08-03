@@ -1,9 +1,10 @@
 require "net/http"
 require "json"
+require_relative "base"
 
 module LLM
   module Client
-    class OpenAI < LLM::Client::Base
+    class OpenAI < Base
       API_URL = "https://api.openai.com/v1/chat/completions"
       MAX_RESPONSE_LENGTH = 400
       TIMEOUT_SECONDS = 30

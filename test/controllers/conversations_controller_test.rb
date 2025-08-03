@@ -23,7 +23,7 @@ class ConversationsControllerTest < ActionDispatch::IntegrationTest
 
     message = Message.last
     assert_equal "Hello world", message.content
-    assert_equal 0, message.role # user
+    assert_equal "user", message.role
     assert_equal @conversation, message.conversation
   end
 
@@ -50,7 +50,7 @@ class ConversationsControllerTest < ActionDispatch::IntegrationTest
 
     message = Message.last
     assert_equal "[スキップ]", message.content
-    assert_equal 0, message.role # user
+    assert_equal "user", message.role
   end
 
   test "should show progress and remaining turns" do

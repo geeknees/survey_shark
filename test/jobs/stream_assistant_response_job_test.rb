@@ -25,13 +25,11 @@ class StreamAssistantResponseJobTest < ActiveJob::TestCase
   end
 
   test "uses streaming orchestrator for normal conversations" do
-    # Stub OpenAI for streaming
+    # Stub OpenAI for streaming - simulate streaming response
     stub_request(:post, "https://api.openai.com/v1/chat/completions")
       .to_return(
         status: 200,
-        body: {
-          choices: [ { message: { content: "Streaming response" } } ]
-        }.to_json
+        body: "data: {\"choices\":[{\"delta\":{\"content\":\"Streaming \"}}]}\n\ndata: {\"choices\":[{\"delta\":{\"content\":\"response\"}}]}\n\ndata: [DONE]\n\n"
       )
 
     ENV["OPENAI_API_KEY"] = "test-key"
