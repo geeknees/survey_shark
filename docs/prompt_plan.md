@@ -420,7 +420,7 @@ Run tests.
 
 ⸻
 
-Prompt 13 — Kamal deploy configs
+Prompt 13 — Kamal deploy configs ✅ COMPLETED
 
 Add Kamal config for production with Traefik + Let’s Encrypt:
 - Dockerfile, kamal.yml, Traefik labels for TLS, volume for /app/storage (SQLite + ActiveStorage if present).
