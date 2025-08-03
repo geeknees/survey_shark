@@ -9,16 +9,16 @@ module PII
       @detected_items = detected_items
     end
 
-  def pii_detected?
-    @pii_detected
-  end
-
-  def summary
-    if pii_detected?
-      "PII detected: #{detected_items.join(', ')}"
-    else
-      "No PII detected"
+    def pii_detected?
+      @pii_detected
     end
-  end
+
+    def summary
+      if pii_detected?
+        "PII detected: #{detected_items.join(', ')}"
+      else
+        "No PII detected"
+      end
+    end
   end
 end

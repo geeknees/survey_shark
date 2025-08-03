@@ -105,4 +105,29 @@ class PII::FakeLLMClientTest < ActiveSupport::TestCase
     assert_includes response, "[学校名]"
     assert_includes response, "学校名"
   end
+
+  test "handles both company and school names" do
+    prompt = "以下のテキストから個人情報を検出してマスクしてください：\n\n株式会社テストで働いています。東京大学を卒業しました。"
+    response = @client.generate_response(
+      system_prompt: "",
+      behavior_prompt: "",
+      conversation_history: [],
+      user_message: prompt
+    )
+
+    assert_includes response, "PII_DETECTED: true"
+    assert_includes response, "[会社名]"
+    assert_includes response, "[学校名]"
+    assert_includes response, "会社名"
+    assert_includes response, "学校名"
+
+    # Check that the masked text preserves both replacements
+    if response =~ /MASKED_TEXT: (.+?)(?:\n|$)/m
+      masked_text = $1.strip
+      assert_includes masked_text, "[会社名]"
+      assert_includes masked_text, "[学校名]"
+    else
+      flunk "Could not find MASKED_TEXT in response"
+    end
+  end
 end

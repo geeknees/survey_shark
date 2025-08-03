@@ -115,6 +115,18 @@ class PiiDetectionTest < ApplicationSystemTestCase
     # Process the PII detection job
     perform_enqueued_jobs
 
+    # Verify the database state was updated correctly
+    @conversation.reload
+    user_message = @conversation.messages.where(role: 0).last
+
+    assert user_message, "User message should be created"
+    assert user_message.meta["pii_processed"], "PII should be processed"
+    assert user_message.meta["pii_detected"], "PII should be detected"
+    assert_equal "[会社名]。[学校名]を卒業しました。", user_message.content
+
+    # Refresh page to see the updated content (since Turbo streams don't work in system tests)
+    visit current_path
+
     # Should see masked versions
     assert_text "[会社名]"
     assert_text "[学校名]"
@@ -123,8 +135,8 @@ class PiiDetectionTest < ApplicationSystemTestCase
     assert_no_text "株式会社テスト"
     assert_no_text "東京大学"
 
-    # Should see warning banner
-    assert_text "個人情報が検出されました"
+    # Should see the PII mask indicator in the message
+    assert_text "🔒 個人情報をマスクしました"
   end
 
   test "conversation continues normally after PII detection" do
