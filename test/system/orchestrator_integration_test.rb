@@ -69,7 +69,7 @@ class OrchestratorIntegrationTest < ApplicationSystemTestCase
     visit conversation_path(@conversation)
 
     # Use skip button
-    click_link "スキップ"
+    click_button "スキップ"
 
     # Should see skip message
     assert_text "[スキップ]"

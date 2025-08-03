@@ -48,7 +48,7 @@ class Interview::PromptBuilderTest < ActiveSupport::TestCase
   end
 
   test "handles different tone settings" do
-    tones = [ "polite_soft", "casual_friendly", "professional" ]
+    tones = [ "polite_soft", "polite_firm", "casual_soft" ]
 
     tones.each do |tone|
       @project.update!(tone: tone)

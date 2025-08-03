@@ -7,15 +7,20 @@ class AnalyzeConversationJob < ApplicationJob
     # Only analyze finished conversations
     return unless conversation.finished_at.present?
 
-    analyzer = Analysis::ConversationAnalyzer.new(conversation)
-    insights = analyzer.analyze
+    begin
+      analyzer = Analysis::ConversationAnalyzer.new(conversation)
+      insights = analyzer.analyze
 
-    # Create or update insight cards for each theme
-    insights.each do |insight|
-      create_or_update_insight_card(conversation.project, conversation, insight)
+      # Create or update insight cards for each theme
+      insights.each do |insight|
+        create_or_update_insight_card(conversation.project, conversation, insight)
+      end
+
+      Rails.logger.info "Analyzed conversation #{conversation.id}, created #{insights.length} insights"
+    rescue => e
+      Rails.logger.error "Error analyzing conversation #{conversation.id}: #{e.message}"
+      # Continue without raising to prevent job failure
     end
-
-    Rails.logger.info "Analyzed conversation #{conversation.id}, created #{insights.length} insights"
   end
 
   private

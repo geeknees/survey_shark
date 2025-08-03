@@ -1,6 +1,6 @@
 require "test_helper"
 
-class ThankYouControllerTest < ActionDispatch::IntegrationTest
+class ThankYousControllerTest < ActionDispatch::IntegrationTest
   def setup
     @project = projects(:one)
     @project.update!(status: "active", max_responses: 10)
@@ -26,10 +26,8 @@ class ThankYouControllerTest < ActionDispatch::IntegrationTest
 
   test "restart creates new conversation when project is active and not at limit" do
     # Set up session data
-    post project_thank_you_path(@project), params: {}, session: {
-      participant_age: 30,
-      participant_attributes: { "hobby" => "reading" }
-    }
+    session[:participant_age] = 30
+    session[:participant_attributes] = { "hobby" => "reading" }
 
     assert_difference [ "Participant.count", "Conversation.count" ], 1 do
       post restart_project_thank_you_path(@project)
@@ -80,10 +78,8 @@ class ThankYouControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "restart clears session data" do
-    post project_thank_you_path(@project), params: {}, session: {
-      participant_age: 30,
-      participant_attributes: { "hobby" => "reading" }
-    }
+    session[:participant_age] = 30
+    session[:participant_attributes] = { "hobby" => "reading" }
 
     post restart_project_thank_you_path(@project)
 

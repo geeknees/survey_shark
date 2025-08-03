@@ -62,7 +62,7 @@ class PiiDetectionTest < ApplicationSystemTestCase
     visit conversation_path(@conversation)
 
     # Click skip button
-    click_link "スキップ"
+    click_button "スキップ"
 
     # Should see skip message
     assert_text "[スキップ]"

@@ -1,15 +1,17 @@
-class Analysis::FakeLLMClient
-  def initialize(responses: nil)
-    @responses = responses || default_responses
-    @call_count = 0
-  end
+module Analysis
+  class FakeLLMClient
+    def initialize(responses: nil)
+      @responses = responses || default_responses
+      @call_count = 0
+    end
 
   def generate_response(system_prompt:, behavior_prompt:, conversation_history:, user_message:)
     response = @responses[@call_count % @responses.length]
     @call_count += 1
 
     # Extract text from the analysis prompt to make response more relevant
-    if user_message.include?("コンピューター") || user_message.include?("パソコン")
+    # Note: text normalization converts "コンピューター" to "コンピュタ" (removes long vowel mark)
+    if user_message.include?("コンピュタ") || user_message.include?("コンピュータ") || user_message.include?("パソコン")
       computer_response
     elsif user_message.include?("仕事") || user_message.include?("作業")
       work_response
@@ -50,5 +52,6 @@ class Analysis::FakeLLMClient
       SEVERITY: 3
       EVIDENCE: 作業に時間がかかる|手順が複雑
     RESPONSE
+  end
   end
 end

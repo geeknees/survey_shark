@@ -31,7 +31,7 @@ class ChatTest < ApplicationSystemTestCase
     visit conversation_path(@conversation)
 
     # Click skip button
-    click_link "スキップ"
+    click_button "スキップ"
 
     # Should be redirected back to conversation
     assert_current_path conversation_path(@conversation)

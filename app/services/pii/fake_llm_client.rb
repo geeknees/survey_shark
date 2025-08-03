@@ -4,7 +4,7 @@ module PII
 
     def initialize(responses: nil)
       @responses = responses || default_responses
-  end
+    end
 
   def generate_response(system_prompt:, behavior_prompt:, conversation_history:, user_message:)
     text = extract_text_from_prompt(user_message)
@@ -13,7 +13,7 @@ module PII
     if contains_pii?(text)
       pii_response(text)
     else
-      no_pii_response
+      no_pii_response(text)
     end
   end
 
@@ -53,10 +53,10 @@ module PII
     RESPONSE
   end
 
-  def no_pii_response
+  def no_pii_response(text)
     <<~RESPONSE
       PII_DETECTED: false
-      MASKED_TEXT: [元のテキストをそのまま]
+      MASKED_TEXT: #{text}
       DETECTED_ITEMS: なし
     RESPONSE
   end
@@ -99,7 +99,7 @@ module PII
   end
 
   def default_responses
-    [ no_pii_response ]
+    [ no_pii_response("") ]
   end
   end
 end

@@ -98,7 +98,7 @@ module LLM
       else
         handle_api_error(response, messages, retry_count)
       end
-    rescue Net::TimeoutError, Net::OpenTimeout, Errno::ECONNREFUSED => e
+    rescue Timeout::Error, Net::OpenTimeout, Errno::ECONNREFUSED => e
       handle_network_error(e, messages, retry_count)
     rescue JSON::ParserError => e
       handle_parse_error(e, messages, retry_count)
@@ -220,7 +220,8 @@ module LLM
     truncated = content[0, MAX_RESPONSE_LENGTH]
     last_sentence_end = [ truncated.rindex("。"), truncated.rindex("？"), truncated.rindex("！") ].compact.max
 
-    if last_sentence_end && last_sentence_end > MAX_RESPONSE_LENGTH * 0.7
+    # If we found a sentence boundary and it's not too early in the text, use it
+    if last_sentence_end && last_sentence_end >= 20  # At least 20 characters
       truncated = truncated[0, last_sentence_end + 1]
     end
 

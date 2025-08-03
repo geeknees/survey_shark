@@ -72,8 +72,10 @@ class PiiDetectJobTest < ActiveJob::TestCase
 
   test "handles LLM errors gracefully" do
     # Mock LLM client to raise error
-    detector = PII::Detector.new(llm_client: ErrorLLMClient.new)
-    PII::Detector.stub(:new, detector) do
+    error_client = ErrorLLMClient.new
+    mock_detector = PII::Detector.new(llm_client: error_client)
+
+    PII::Detector.stub(:new, mock_detector) do
       assert_nothing_raised do
         PiiDetectJob.perform_now(@message_with_pii.id)
       end

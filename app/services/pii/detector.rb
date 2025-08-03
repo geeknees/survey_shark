@@ -80,7 +80,8 @@ module PII
 
     # Extract detected items
     detected_items = if response =~ /DETECTED_ITEMS: (.+?)(?:\n|$)/m
-      $1.strip.split(/[,、]/).map(&:strip).reject(&:empty?)
+      items = $1.strip.split(/[,、]/).map(&:strip).reject(&:empty?)
+      items.reject { |item| item == "なし" || item.downcase == "none" }
     else
       []
     end
