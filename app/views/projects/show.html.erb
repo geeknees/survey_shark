@@ -1,4 +1,96 @@
-<div>
-  <h1 class="font-bold text-4xl">Projects#show</h1>
-  <p>Find me in app/views/projects/show.html.erb</p>
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <div class="flex justify-between items-start mb-8">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900"><%= @project.name %></h1>
+      <div class="flex items-center mt-2 space-x-4">
+        <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full 
+          <%= case @project.status
+              when 'draft' then 'bg-gray-100 text-gray-800'
+              when 'active' then 'bg-green-100 text-green-800'
+              when 'closed' then 'bg-red-100 text-red-800'
+              end %>">
+          <%= @project.status.capitalize %>
+        </span>
+        <span class="text-sm text-gray-600">Max responses: <%= @project.max_responses %></span>
+      </div>
+    </div>
+    <div class="flex space-x-3">
+      <%= link_to "Edit", edit_project_path(@project), class: "bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors" %>
+      <%= link_to "Back to Projects", projects_path, class: "bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors" %>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div class="space-y-6">
+      <div class="bg-white shadow-sm rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Project Details</h2>
+        
+        <% if @project.goal.present? %>
+          <div class="mb-4">
+            <h3 class="text-sm font-medium text-gray-700 mb-2">Goal/Description</h3>
+            <p class="text-gray-900"><%= simple_format(@project.goal) %></p>
+          </div>
+        <% end %>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <h3 class="text-sm font-medium text-gray-700 mb-1">Tone</h3>
+            <p class="text-gray-900 capitalize"><%= @project.tone.humanize %></p>
+          </div>
+          <div>
+            <h3 class="text-sm font-medium text-gray-700 mb-1">Max Responses</h3>
+            <p class="text-gray-900"><%= @project.max_responses %></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white shadow-sm rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Conversation Limits</h2>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <h3 class="text-sm font-medium text-gray-700 mb-1">Max Turns</h3>
+            <p class="text-gray-900"><%= @project.limits&.dig('max_turns') || 12 %></p>
+          </div>
+          <div>
+            <h3 class="text-sm font-medium text-gray-700 mb-1">Max Deep Dives</h3>
+            <p class="text-gray-900"><%= @project.limits&.dig('max_deep') || 2 %></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="space-y-6">
+      <div class="bg-white shadow-sm rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Must Ask Topics</h2>
+        <% if @project.must_ask.present? && @project.must_ask.any? %>
+          <ul class="space-y-2">
+            <% @project.must_ask.each do |topic| %>
+              <li class="flex items-start">
+                <span class="text-green-500 mr-2">•</span>
+                <span class="text-gray-900"><%= topic %></span>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <p class="text-gray-500 italic">No specific topics required</p>
+        <% end %>
+      </div>
+
+      <div class="bg-white shadow-sm rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Never Ask Topics</h2>
+        <% if @project.never_ask.present? && @project.never_ask.any? %>
+          <ul class="space-y-2">
+            <% @project.never_ask.each do |topic| %>
+              <li class="flex items-start">
+                <span class="text-red-500 mr-2">•</span>
+                <span class="text-gray-900"><%= topic %></span>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <p class="text-gray-500 italic">No topics restricted</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
 </div>

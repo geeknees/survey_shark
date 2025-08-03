@@ -1,4 +1,10 @@
-<div>
-  <h1 class="font-bold text-4xl">Projects#edit</h1>
-  <p>Find me in app/views/projects/edit.html.erb</p>
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">Edit Project</h1>
+    <p class="text-gray-600 mt-2">Update project settings</p>
+  </div>
+
+  <div class="bg-white shadow-sm rounded-lg p-6">
+    <%= render 'form', project: @project %>
+  </div>
 </div>

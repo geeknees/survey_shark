@@ -271,7 +271,7 @@ Run tests.
 
 ⸻
 
-Prompt 4 — Admin Projects CRUD + state machine (draft/active/closed)
+Prompt 4 — Admin Projects CRUD + state machine (draft/active/closed) ✅ COMPLETED
 
 Implement ProjectsController (admin area) with index/new/create/edit/update/destroy/show.
 - Form inputs: name, goal, must_ask (array), never_ask (array), tone, limits (max_turns, max_deep),
