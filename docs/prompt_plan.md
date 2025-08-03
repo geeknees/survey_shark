@@ -287,7 +287,7 @@ Run tests.
 
 ⸻
 
-Prompt 5 — Invite link issuance and public entry /i/:token
+Prompt 5 — Invite link issuance and public entry /i/:token ✅ COMPLETED
 
 Implement InviteLink issuance:
 - Admin on project show can click "Generate Link" to create (or show existing) a reusable token.

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_03_000555) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_03_002126) do
   create_table "admins", force: :cascade do |t|
     t.string "email_address"
     t.string "password_digest"
@@ -92,6 +92,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_03_000555) do
     t.integer "max_responses", default: 50
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "responses_count", default: 0, null: false
   end
 
   create_table "sessions", force: :cascade do |t|

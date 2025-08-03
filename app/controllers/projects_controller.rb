@@ -1,6 +1,6 @@
 class ProjectsController < ApplicationController
   before_action :require_authentication
-  before_action :set_project, only: [:show, :edit, :update, :destroy]
+  before_action :set_project, only: [:show, :edit, :update, :destroy, :generate_invite_link]
 
   def index
     @projects = Project.all.order(:name)
@@ -37,6 +37,11 @@ class ProjectsController < ApplicationController
   def destroy
     @project.destroy
     redirect_to projects_url, notice: 'Project was successfully deleted.'
+  end
+
+  def generate_invite_link
+    @invite_link = @project.invite_links.first_or_create!
+    redirect_to @project, notice: 'Invite link generated successfully.'
   end
 
   private

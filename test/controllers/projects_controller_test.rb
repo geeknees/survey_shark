@@ -65,6 +65,28 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to projects_url
   end
 
+  test "should generate invite link" do
+    project = Project.create!(name: "Test Project", max_responses: 50)
+    assert_difference('InviteLink.count', 1) do
+      post generate_invite_link_project_path(project)
+    end
+    
+    assert_redirected_to project_path(project)
+    assert_equal project, InviteLink.last.project
+  end
+
+  test "should not create duplicate invite link" do
+    project = Project.create!(name: "Test Project", max_responses: 50)
+    existing_link = project.invite_links.create!
+    
+    assert_no_difference('InviteLink.count') do
+      post generate_invite_link_project_path(project)
+    end
+    
+    assert_redirected_to project_path(project)
+    assert_equal existing_link, project.invite_links.first
+  end
+
   private
 
   def sign_in(admin)

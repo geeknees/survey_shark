@@ -1,0 +1,33 @@
+<div class="max-w-2xl mx-auto px-4 py-8">
+  <div class="bg-white shadow-sm rounded-lg p-8">
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-bold text-gray-900 mb-4"><%= @project.name %></h1>
+      <% if @project.goal.present? %>
+        <p class="text-gray-600 text-lg"><%= simple_format(@project.goal) %></p>
+      <% end %>
+    </div>
+
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+      <h2 class="text-lg font-semibold text-blue-900 mb-3">参加について</h2>
+      <div class="text-blue-800 space-y-2">
+        <p>• このアンケートにご参加いただくことで、貴重なご意見をお聞かせください</p>
+        <p>• 所要時間は約10-15分程度です</p>
+        <p>• いただいた情報は匿名で処理され、研究目的のみに使用されます</p>
+        <p>• 途中で参加を取りやめることも可能です</p>
+      </div>
+    </div>
+
+    <div class="text-center">
+      <%= form_with url: invite_start_path(@invite_link.token), method: :post, local: true do |form| %>
+        <%= form.submit "同意して開始", 
+            class: "bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg text-lg transition-colors cursor-pointer" %>
+      <% end %>
+    </div>
+
+    <div class="text-center mt-6">
+      <p class="text-sm text-gray-500">
+        「同意して開始」ボタンを押すことで、上記の内容に同意したものとみなされます
+      </p>
+    </div>
+  </div>
+</div>

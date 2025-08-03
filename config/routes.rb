@@ -1,7 +1,16 @@
 Rails.application.routes.draw do
-  resources :projects
+  resources :projects do
+    member do
+      post :generate_invite_link
+    end
+  end
   resource :session
   resources :passwords, param: :token
+  
+  # Public invite link route
+  get "i/:token", to: "invites#show", as: :invite
+  post "i/:token/start", to: "invites#start", as: :invite_start
+  
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
