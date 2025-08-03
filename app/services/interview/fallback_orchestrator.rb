@@ -12,7 +12,7 @@ module Interview
 
   def process_user_message(user_message)
     # Check turn limit before processing
-    user_turn_count = @conversation.messages.where(role: 0).count
+    user_turn_count = @conversation.messages.where(role: 0).count.to_i
     max_turns = (@conversation.project.limits.dig("max_turns") || 12).to_i
 
     if user_turn_count >= max_turns

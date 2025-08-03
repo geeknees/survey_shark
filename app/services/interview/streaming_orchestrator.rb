@@ -9,7 +9,7 @@ module Interview
 
   def process_user_message_with_streaming(user_message)
     # Check turn limit before processing
-    user_turn_count = @conversation.messages.where(role: 0).count
+    user_turn_count = @conversation.messages.where(role: 0).count.to_i
     max_turns = (@project.limits.dig("max_turns") || 12).to_i
 
     if user_turn_count >= max_turns
@@ -166,7 +166,9 @@ module Interview
     messages_since_deepening = @conversation.messages.where(role: 0)
                                                    .where("created_at > ?", 5.minutes.ago)
                                                    .count
-    [ messages_since_deepening - 1, 0 ].max
+    # Ensure we're working with integers to avoid comparison errors
+    count_value = messages_since_deepening.to_i
+    [ count_value - 1, 0 ].max
   end
 
   def identify_most_important_pain_point

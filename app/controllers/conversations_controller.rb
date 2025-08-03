@@ -4,7 +4,7 @@ class ConversationsController < ApplicationController
 
   def show
     @messages = @conversation.messages.order(:created_at)
-    @user_turn_count = @conversation.messages.where(role: 0).count
+    @user_turn_count = @conversation.messages.where(role: 0).count.to_i
     @max_turns = (@conversation.project.limits.dig("max_turns") || 12).to_i
     @remaining_turns = [ @max_turns - @user_turn_count, 0 ].max
   end
@@ -17,7 +17,7 @@ class ConversationsController < ApplicationController
     return redirect_to @conversation if @conversation.finished_at.present?
 
     # Check turn limit before creating message
-    user_turn_count = @conversation.messages.where(role: 0).count
+    user_turn_count = @conversation.messages.where(role: 0).count.to_i
     max_turns = (@conversation.project.limits.dig("max_turns") || 12).to_i
 
     if user_turn_count >= max_turns
@@ -46,7 +46,7 @@ class ConversationsController < ApplicationController
     return redirect_to @conversation if @conversation.finished_at.present?
 
     # Check turn limit before creating skip message
-    user_turn_count = @conversation.messages.where(role: 0).count
+    user_turn_count = @conversation.messages.where(role: 0).count.to_i
     max_turns = (@conversation.project.limits.dig("max_turns") || 12).to_i
 
     if user_turn_count >= max_turns
