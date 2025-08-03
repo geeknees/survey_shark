@@ -19,6 +19,9 @@ class ConversationsController < ApplicationController
       content: content.truncate(500)
     )
 
+    # Enqueue PII detection for user message
+    PiiDetectJob.perform_later(user_message.id)
+
     # Enqueue streaming orchestration job
     StreamAssistantResponseJob.perform_later(@conversation.id, user_message.id)
     
@@ -31,6 +34,8 @@ class ConversationsController < ApplicationController
       role: 0, # user
       content: "[スキップ]"
     )
+
+    # Skip PII detection for skip messages (no personal info in "[スキップ]")
 
     # Enqueue streaming orchestration job
     StreamAssistantResponseJob.perform_later(@conversation.id, user_message.id)

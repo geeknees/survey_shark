@@ -22,6 +22,9 @@
       <%= turbo_stream_from @conversation %>
       <%= render "messages", messages: @messages %>
 
+      <!-- PII Warnings Container -->
+      <div id="pii-warnings"></div>
+
       <!-- Message Composer -->
       <div class="border-t pt-4" data-controller="chat-composer">
         <%= form_with url: create_message_conversation_path(@conversation), method: :post, 

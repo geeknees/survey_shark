@@ -352,7 +352,7 @@ Run tests.
 
 ⸻
 
-Prompt 9 — OpenAI client (streaming) + fallback template (3Q)
+Prompt 9 — OpenAI client (streaming) + fallback template (3Q) ✅ COMPLETED
 
 Implement LLM::Client::OpenAI with stream_chat(messages:, **opts, &chunk).
 - Read OPENAI_API_KEY from ENV.
