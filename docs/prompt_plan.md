@@ -249,7 +249,7 @@ Run tests until green.
 
 ⸻
 
-Prompt 3 — Domain models & migrations (projects, invite_links, participants, conversations, messages, insight_cards)
+Prompt 3 — Domain models & migrations (projects, invite_links, participants, conversations, messages, insight_cards) ✅ COMPLETED
 
 Create models/migrations per MVP:
 - projects(name:string!, goal:text, must_ask:json default[], never_ask:json default[],

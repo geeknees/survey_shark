@@ -2,12 +2,12 @@
 
 one:
   project: one
-  token: MyString
+  token: unique_token_one_12345
   expires_at: 2025-08-03 00:48:28
   reusable: false
 
 two:
   project: two
-  token: MyString
+  token: unique_token_two_67890
   expires_at: 2025-08-03 00:48:28
   reusable: false
