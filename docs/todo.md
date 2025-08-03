@@ -3,6 +3,8 @@
 - [x] AIからのレスポンスがない
 - [x] ターンが終わっても回答を続けられる（終了しない）
 - [x] OpenAIからのレスポンスが表示されない（There was an exception - NoMethodError(undefined method 'user' for an instance of Session)）
+- [ ] スキップボタンが動かない
+- [ ] レスポンスががあるまでにローディングアニメーションを表示
 - [ ] プロジェクトの削除ができない
 - [ ] Fix error: No route matches [GET] "/conversations/2/skip"
 - [ ] ナビゲーション用のメニューバーを追加

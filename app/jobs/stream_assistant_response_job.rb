@@ -1,3 +1,5 @@
+require_relative "../services/llm/client/openai"
+
 class StreamAssistantResponseJob < ApplicationJob
   queue_as :default
 
