@@ -205,6 +205,16 @@ module Interview
       partial: "conversations/messages",
       locals: { messages: @conversation.messages.order(:created_at) }
     )
+
+    # Broadcast custom script to reset form
+    Turbo::StreamsChannel.broadcast_action_to(
+      @conversation,
+      action: "append",
+      target: "messages",
+      html: "<script>
+        document.dispatchEvent(new CustomEvent('chat:response-complete'));
+      </script>".html_safe
+    )
   end
   end
 end
