@@ -12,10 +12,13 @@ module Interview
 
   def process_user_message(user_message)
     # Mark conversation as using fallback mode
-    @conversation.update!(
-      state: "fallback",
-      meta: (@conversation.meta || {}).merge(fallback_mode: true)
-    )
+    current_meta = @conversation.meta || {}
+    unless current_meta["fallback_mode"]
+      @conversation.update!(
+        state: "fallback",
+        meta: current_meta.merge(fallback_mode: true)
+      )
+    end
 
     question_number = determine_question_number
 
