@@ -1,7 +1,8 @@
 - [x] アンケートの最初に質問が表示されない
 - [x] gem "ruby-openai" への移行
 - [x] AIからのレスポンスがない
-- [ ] ターンが終わっても回答を続けられる（終了しない）
+- [x] ターンが終わっても回答を続けられる（終了しない）
+- [x] OpenAIからのレスポンスが表示されない（There was an exception - NoMethodError(undefined method 'user' for an instance of Session)）
 - [ ] プロジェクトの削除ができない
 - [ ] Fix error: No route matches [GET] "/conversations/2/skip"
 - [ ] ナビゲーション用のメニューバーを追加

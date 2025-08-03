@@ -8,6 +8,29 @@ module Interview
   end
 
   def process_user_message_with_streaming(user_message)
+    # Check turn limit before processing
+    user_turn_count = @conversation.messages.where(role: 0).count
+    max_turns = (@project.limits.dig("max_turns") || 12).to_i
+
+    if user_turn_count >= max_turns
+      # Mark conversation as finished if turn limit reached
+      @conversation.update!(finished_at: Time.current) unless @conversation.finished_at.present?
+
+      # Create a final assistant message indicating completion
+      final_message = @conversation.messages.create!(
+        role: 1, # assistant
+        content: "ご協力いただきありがとうございました。インタビューを終了します。"
+      )
+
+      # Broadcast the final message
+      broadcast_final_update
+
+      # Enqueue analysis job for finished conversation
+      AnalyzeConversationJob.perform_later(@conversation.id)
+
+      return "ご協力いただきありがとうございました。インタビューを終了します。"
+    end
+
     # Determine next state
     next_state = determine_next_state(user_message)
     @conversation.update!(state: next_state)

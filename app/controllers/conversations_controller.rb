@@ -13,6 +13,19 @@ class ConversationsController < ApplicationController
     content = params[:content]&.strip
     return redirect_to @conversation if content.blank?
 
+    # Check if conversation is already finished
+    return redirect_to @conversation if @conversation.finished_at.present?
+
+    # Check turn limit before creating message
+    user_turn_count = @conversation.messages.where(role: 0).count
+    max_turns = (@conversation.project.limits.dig("max_turns") || 12).to_i
+
+    if user_turn_count >= max_turns
+      # Mark conversation as finished if turn limit reached
+      @conversation.update!(finished_at: Time.current) unless @conversation.finished_at.present?
+      return redirect_to @conversation
+    end
+
     # Create user message
     user_message = @conversation.messages.create!(
       role: 0, # user
@@ -29,6 +42,19 @@ class ConversationsController < ApplicationController
   end
 
   def skip
+    # Check if conversation is already finished
+    return redirect_to @conversation if @conversation.finished_at.present?
+
+    # Check turn limit before creating skip message
+    user_turn_count = @conversation.messages.where(role: 0).count
+    max_turns = (@conversation.project.limits.dig("max_turns") || 12).to_i
+
+    if user_turn_count >= max_turns
+      # Mark conversation as finished if turn limit reached
+      @conversation.update!(finished_at: Time.current) unless @conversation.finished_at.present?
+      return redirect_to @conversation
+    end
+
     # Create skip message
     user_message = @conversation.messages.create!(
       role: 0, # user
