@@ -10,11 +10,11 @@ class AdminsController < ApplicationController
         redirect_to root_path, notice: "Password was successfully updated."
       else
         flash.now[:alert] = "Password confirmation doesn't match or password is too short."
-        render :edit_password, status: :unprocessable_entity
+        render :edit_password, status: :unprocessable_content
       end
     else
       flash.now[:alert] = "Current password is incorrect."
-      render :edit_password, status: :unprocessable_entity
+      render :edit_password, status: :unprocessable_content
     end
   end
 

@@ -9,7 +9,7 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     super
     # Allow local connections for system tests when WebMock is enabled
     if defined?(WebMock) && WebMock.net_connect_allowed?
-      WebMock.disable_net_connect!(allow_localhost: true, allow: ["127.0.0.1", "localhost"])
+      WebMock.disable_net_connect!(allow_localhost: true, allow: [ "127.0.0.1", "localhost" ])
     end
   end
 
@@ -27,9 +27,9 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     # Allow local connections for Selenium WebDriver
     # Selenium typically uses random ports in the 9000-10000 range
     WebMock.disable_net_connect!(
-      allow_localhost: true, 
+      allow_localhost: true,
       allow: [
-        "127.0.0.1", 
+        "127.0.0.1",
         "localhost",
         /127\.0\.0\.1:\d+/,
         /localhost:\d+/

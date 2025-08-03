@@ -92,5 +92,4 @@ class InvitesTest < ApplicationSystemTestCase
     assert_text "not yet active"
     assert_no_button "同意して開始"
   end
-
 end

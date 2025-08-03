@@ -1,4 +1,5 @@
 require_relative "../services/llm/client/openai"
+require_relative "../services/interview/fallback_orchestrator"
 
 class StreamAssistantResponseJob < ApplicationJob
   queue_as :default
@@ -9,9 +10,9 @@ class StreamAssistantResponseJob < ApplicationJob
 
     # Check if already in fallback mode or should use fallback
     if conversation.state == "fallback" || fallback_mode?(conversation)
-      # Use regular orchestrator for fallback (no streaming needed)
-      orchestrator = Interview::Orchestrator.new(conversation)
-      response = orchestrator.process_user_message(user_message)
+      # Use fallback orchestrator for fallback mode
+      fallback_orchestrator = Interview::FallbackOrchestrator.new(conversation)
+      response = fallback_orchestrator.process_user_message(user_message)
       broadcast_complete_response(conversation, response)
       return
     end

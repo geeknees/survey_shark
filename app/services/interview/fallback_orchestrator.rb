@@ -80,7 +80,11 @@ module Interview
                                      .where.not(content: "[スキップ]")
                                      .count
 
-    # Return the next question number (1-indexed)
+    # Return the question number based on how many user messages we've seen
+    # 1 user message -> ask question 1
+    # 2 user messages -> ask question 2
+    # 3 user messages -> ask question 3
+    # 4+ user messages -> finish (return > 3)
     user_messages_count
   end
   end

@@ -99,7 +99,7 @@ class AdminsControllerTest < ActionDispatch::IntegrationTest
     delete session_url
 
     get edit_password_admin_url(@admin)
-    
+
     # Should redirect to login page
     assert_redirected_to new_session_path
   end
