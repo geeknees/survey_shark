@@ -74,6 +74,14 @@
       <!-- Message Composer -->
       <% unless @conversation.finished_at.present? || @remaining_turns <= 0 %>
       <div class="border-t pt-4" data-controller="chat-composer">
+
+        <!-- Loading indicator -->
+        <div class="hidden flex items-center justify-center space-x-2 p-3 mb-3 bg-blue-50 rounded-lg"
+              data-chat-composer-target="loading">
+          <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+          <span class="text-blue-600 text-sm">AIが返信を生成中...</span>
+        </div>
+
         <%= form_with url: create_message_conversation_path(@conversation), method: :post,
                       local: true, class: "space-y-4",
                       data: {
@@ -96,15 +104,6 @@
 
             </div>
           </div>
-
-          <!-- Loading indicator -->
-          <div class="hidden flex items-center justify-center space-x-2 p-3 bg-blue-50 rounded-lg"
-               data-chat-composer-target="loading">
-            <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-            <span class="text-blue-600 text-sm">AIが返信を生成中...</span>
-          </div>
-
-
 
           <!-- Quick Replies -->
           <div class="space-y-2">
