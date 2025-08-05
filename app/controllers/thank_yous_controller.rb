@@ -1,4 +1,6 @@
 class ThankYousController < ApplicationController
+  include ProjectAccess
+
   allow_unauthenticated_access
   before_action :set_project
 
@@ -10,12 +12,7 @@ class ThankYousController < ApplicationController
     # Create a new conversation for the same project
     if @project.active? && !project_at_limit?
       # Increment responses count
-      @project.increment!(:responses_count)
-
-      # Check if we've hit the limit and should auto-close
-      if @project.responses_count >= @project.max_responses
-        @project.update!(status: "closed")
-      end
+      increment_project_responses!
 
       # Create new participant and conversation
       participant = @project.participants.create!(
@@ -48,13 +45,5 @@ class ThankYousController < ApplicationController
 
   def set_project
     @project = Project.find(params[:project_id])
-  end
-
-  def project_at_limit?
-    @project.responses_count >= @project.max_responses
-  end
-
-  def generate_anon_hash
-    Digest::SHA256.hexdigest("#{Time.current.to_f}-#{SecureRandom.hex(8)}")
   end
 end

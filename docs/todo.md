@@ -7,11 +7,11 @@
 ### 🚨 高優先度 - 即座に実装推奨
 
 #### 1. 重複コードの削減
-- [ ] `app/controllers/concerns/project_access.rb` の作成
-  - [ ] `generate_anon_hash` メソッドの共通化
-  - [ ] `find_project_by_token` の統一
-  - [ ] `check_project_availability` の実装
-- [ ] `InvitesController`, `ThankYousController`, `ConversationsController` への適用
+- [x] `app/controllers/concerns/project_access.rb` の作成
+  - [x] `generate_anon_hash` メソッドの共通化
+  - [x] `find_project_by_token` の統一
+  - [x] `check_project_availability` の実装
+- [x] `InvitesController`, `ThankYousController`, `ConversationsController` への適用
 
 #### 2. Interview::Orchestratorクラスの分割
 - [ ] `app/services/interview/state_machine.rb` の作成
