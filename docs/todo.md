@@ -1,4 +1,87 @@
-## `/conversations/:id` 動作不安定性の問題と改善案 (2025/8/3)
+# Survey Shark 開発TODO
+
+## 🔧 コードリファクタリング計画 (2025年8月)
+
+*詳細は `docs/refactoring_proposals.md` を参照*
+
+### 🚨 高優先度 - 即座に実装推奨
+
+#### 1. 重複コードの削減
+- [ ] `app/controllers/concerns/project_access.rb` の作成
+  - [ ] `generate_anon_hash` メソッドの共通化
+  - [ ] `find_project_by_token` の統一
+  - [ ] `check_project_availability` の実装
+- [ ] `InvitesController`, `ThankYousController`, `ConversationsController` への適用
+
+#### 2. Interview::Orchestratorクラスの分割
+- [ ] `app/services/interview/state_machine.rb` の作成
+- [ ] `app/services/interview/response_generator.rb` の作成
+- [ ] `app/services/interview/turn_manager.rb` の作成
+- [ ] 既存Orchestratorの簡略化とリファクタリング
+
+#### 3. セキュリティ関連の改善
+- [ ] `app/services/security/token_generator.rb` の作成
+- [ ] トークン生成ロジックの統一
+- [ ] パラメータバリデーションの強化
+
+#### 4. JavaScript層の最適化
+- [ ] `hello_controller.js` の削除（未使用）
+- [ ] `app/javascript/controllers/mixins/loading_state_mixin.js` の作成
+- [ ] `chat_composer_controller.js` の分割とMixin適用
+
+### 🔄 中優先度 - 次のスプリントで実装
+
+#### 5. モデル層の責務分散
+- [ ] `app/models/concerns/project_status_management.rb` の作成
+- [ ] `app/models/concerns/project_limits.rb` の作成
+- [ ] `app/models/concerns/project_analytics.rb` の作成
+- [ ] `Project` モデルの簡略化
+
+#### 6. Conversationモデルの拡充
+- [ ] `app/models/concerns/conversation_state_machine.rb` の作成
+- [ ] `app/models/concerns/conversation_progress.rb` の作成
+- [ ] 状態管理ロジックのモデルへの移行
+
+#### 7. LLMクライアントの抽象化改善
+- [ ] `app/services/llm/client/mixins/retryable_api_client.rb` の作成
+- [ ] `app/services/llm/client/mixins/response_processor.rb` の作成
+- [ ] `app/services/llm/message_builder.rb` の作成
+
+#### 8. JavaScript層の統一化
+- [ ] `app/javascript/services/chat_event_manager.js` の作成
+- [ ] `app/javascript/services/form_validator.js` の作成
+- [ ] イベント管理とバリデーションの統一
+
+#### 9. ヘルパーメソッドの整理
+- [ ] `app/helpers/navigation_helper.rb` の作成
+- [ ] `app/helpers/projects_helper.rb` の拡充
+- [ ] `ApplicationHelper` の分割
+
+### 📋 低優先度 - リファクタリング完了後
+
+#### 10. ビュー層の部分テンプレート化
+- [ ] `app/views/projects/_project_card.html.erb` の作成
+- [ ] `app/views/projects/_project_status.html.erb` の作成
+- [ ] `app/views/shared/_authenticated_navigation.html.erb` の作成
+
+#### 11. 設定の外部化
+- [ ] `config/application.yml` の作成
+- [ ] マジックナンバーの設定ファイルへの移行
+- [ ] 環境固有設定の整理
+
+#### 12. バックグラウンドジョブの最適化
+- [ ] `app/services/analysis/conversation_pipeline.rb` の作成
+- [ ] `AnalyzeConversationJob` の分離
+- [ ] エラーハンドリングの改善
+
+#### 13. テストの改善
+- [ ] `test/support/interview_test_helpers.rb` の作成
+- [ ] JavaScript テストの追加
+- [ ] テスト構造の整理
+
+---
+
+## 🐛 既存の問題と改善案 (2025/8/3)
 
 ### 特定された問題点：
 
@@ -63,8 +146,9 @@
 2. **中**: B(JavaScript状態管理), C(データベース整合性)
 3. **低**: E(UX改善), F(モニタリング)
 
-## その他の改善点
+## 📈 その他の機能改善・バグ修正
 
+### ✅ 完了済み
 - [x] アンケートの最初に質問が表示されない
 - [x] gem "ruby-openai" への移行
 - [x] AIからのレスポンスがない
@@ -80,7 +164,29 @@
 - [x] 最初に聞く質問はプロジェクト作成時に入力して固定にする
 - [x] 回答のログをすべて見れるようにする
 - [x] AIが会話を終了したと判定したときには回答を完了する
+- [x] チャットをエンターで送信するとAIが返信を生成中...が表示されるが、そこから動かない
+
+### 🔲 未完了
 - [ ] もう一度回答するボタンから始めると最初の質問が表示されない
 - [ ] 終了時のメッセージをもっと自動で終了したことがわかるように
 - [ ] 個人情報フィルターが動いていない
-- [x] チャットをエンターで送信するとAIが返信を生成中...が表示されるが、そこから動かない
+
+---
+
+## 📝 開発ガイドライン
+
+### 実装順序
+1. **高優先度**: セキュリティ・安定性に関わる重複コードとOrchestratorの分割
+2. **中優先度**: モデル層とサービス層の構造化
+3. **低優先度**: UI/UX改善と最適化
+
+### 品質基準
+- 各実装には対応するテストを追加
+- リファクタリング後も既存機能が正常動作することを確認
+- コードレビューで設計原則に沿っているかチェック
+- セキュリティスキャン (`bin/brakeman`) を通過
+
+### 参考ドキュメント
+- `docs/refactoring_proposals.md`: 詳細なリファクタリング提案
+- `docs/system_architecture.md`: システム全体アーキテクチャ
+- `AGENTS.md`: 開発環境とワークフロー
