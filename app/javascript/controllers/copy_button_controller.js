@@ -3,41 +3,61 @@ import { Controller } from '@hotwired/stimulus'
 export default class extends Controller {
   static targets = ['button', 'input']
 
+  connect() {
+    this._removeScaleTimeout = null
+    this._resetTextTimeout = null
+  }
+
+  disconnect() {
+    clearTimeout(this._removeScaleTimeout)
+    clearTimeout(this._resetTextTimeout)
+  }
+
   copy() {
     const text = this.inputTarget.value
 
     navigator.clipboard
       .writeText(text)
       .then(() => {
-        // Success feedback
-        const originalText = this.buttonTarget.textContent
-        const originalClasses = this.buttonTarget.className
+        const btn = this.buttonTarget
+        const originalText = btn.textContent
 
-        this.buttonTarget.textContent = '✓ Copied!'
-        this.buttonTarget.className =
-          'bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm transition-all duration-200 transform scale-95'
+        // Clear previous timeouts to avoid stacking
+        clearTimeout(this._removeScaleTimeout)
+        clearTimeout(this._resetTextTimeout)
 
-        // Reset after 2 seconds
-        setTimeout(() => {
-          this.buttonTarget.textContent = originalText
-          this.buttonTarget.className = originalClasses
-        }, 2000)
+        // Feedback text
+        btn.textContent = '✓ Copied!'
+
+        // Ensure transition classes exist on the button in the view
+        // Then toggle a quick press animation using inline style to avoid Tailwind purge issues
+        btn.style.transform = 'scale(0.95)'
+        this._removeScaleTimeout = setTimeout(() => {
+          btn.style.transform = ''
+        }, 180)
+
+        // Reset text after a moment
+        this._resetTextTimeout = setTimeout(() => {
+          btn.textContent = originalText
+        }, 1500)
       })
       .catch((err) => {
-        // Error feedback
         console.error('Failed to copy text: ', err)
-        const originalText = this.buttonTarget.textContent
-        const originalClasses = this.buttonTarget.className
+        const btn = this.buttonTarget
+        const originalText = btn.textContent
 
-        this.buttonTarget.textContent = '✗ Error'
-        this.buttonTarget.className =
-          'bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm transition-all duration-200 transform scale-95'
+        clearTimeout(this._removeScaleTimeout)
+        clearTimeout(this._resetTextTimeout)
 
-        // Reset after 2 seconds
-        setTimeout(() => {
-          this.buttonTarget.textContent = originalText
-          this.buttonTarget.className = originalClasses
-        }, 2000)
+        btn.textContent = '✗ Error'
+        btn.style.transform = 'scale(0.95)'
+        this._removeScaleTimeout = setTimeout(() => {
+          btn.style.transform = ''
+        }, 180)
+
+        this._resetTextTimeout = setTimeout(() => {
+          btn.textContent = originalText
+        }, 1500)
       })
   }
 }
