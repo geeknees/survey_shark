@@ -48,7 +48,12 @@ class StreamAssistantResponseJob < ApplicationJob
 
     begin
       # Use streaming orchestrator for OpenAI
-      llm_client = Rails.env.test? ? nil : LLM::Client::OpenAI.new
+      llm_client = if Rails.env.test?
+        # Allow tests to trigger real client (and thus stubbed HTTP + fallback behavior)
+        ENV["OPENAI_API_KEY"].present? ? LLM::Client::OpenAI.new : nil
+      else
+        LLM::Client::OpenAI.new
+      end
       streaming_orchestrator = Interview::StreamingOrchestrator.new(conversation, llm_client: llm_client)
       streaming_orchestrator.process_user_message_with_streaming(user_message)
     rescue LLM::Client::OpenAI::OpenAIError, StandardError => e
