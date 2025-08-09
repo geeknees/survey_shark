@@ -1,56 +1,57 @@
 import { Controller } from '@hotwired/stimulus'
 
+// Debug helpers (enable by setting window.SURVEY_SHARK_DEBUG = true)
+const dlog = (...args) => {
+  try { if (window && window.SURVEY_SHARK_DEBUG) console.log(...args) } catch (_) {}
+}
+const dwarn = (...args) => {
+  try { if (window && window.SURVEY_SHARK_DEBUG) console.warn(...args) } catch (_) {}
+}
+
 export default class extends Controller {
   static targets = ['form', 'textarea', 'submit', 'counter', 'loading']
 
   connect() {
-    console.log('chat-composer controller connected')
+    dlog('chat-composer controller connected')
     this.updateCounter()
     this.updateSubmitButton()
     this.isSubmitting = false
-
-    // Listen for response complete events
-    this.responseCompleteHandler = () => {
-      console.log('chat:response-complete event received, resetting form')
-      this.resetForm()
-    }
-    document.addEventListener(
-      'chat:response-complete',
-      this.responseCompleteHandler
-    )
 
     // Set up observer to watch for form reset signals
     this.setupFormResetObserver()
   }
 
   disconnect() {
-    document.removeEventListener(
-      'chat:response-complete',
-      this.responseCompleteHandler
-    )
-
     if (this.formResetObserver) {
       this.formResetObserver.disconnect()
     }
   }
 
   textareaTargetConnected() {
+    this.isComposing = false
+
+    this.textareaTarget.addEventListener('compositionstart', () => {
+      this.isComposing = true
+    })
+
+    this.textareaTarget.addEventListener('compositionend', () => {
+      this.isComposing = false
+      this.updateCounter()
+      this.updateSubmitButton()
+    })
+
     this.textareaTarget.addEventListener('input', () => {
       this.updateCounter()
       this.updateSubmitButton()
     })
 
     this.textareaTarget.addEventListener('keydown', (event) => {
+      if (event.isComposing || this.isComposing) return
       if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault()
         if (this.canSubmit() && !this.isSubmitting) {
-          console.log('Enter key pressed, submitting form')
-          // Create a synthetic submit event to trigger handleSubmit
-          const submitEvent = new Event('submit', {
-            bubbles: true,
-            cancelable: true
-          })
-          this.formTarget.dispatchEvent(submitEvent)
+          dlog('Enter key pressed, submitting form via requestSubmit')
+          this.formTarget.requestSubmit()
         }
       }
     })
@@ -62,40 +63,115 @@ export default class extends Controller {
     // Prevent double submission with timestamp check
     const now = Date.now()
     if (this.lastSubmitTime && now - this.lastSubmitTime < 1000) {
-      console.warn('Preventing duplicate submission')
+      dwarn('Preventing duplicate submission')
       return
     }
     this.lastSubmitTime = now
 
-    this.showLoading()
-    this.isSubmitting = true
-
-    // Set a timeout to reset submission state if something goes wrong
-    this.submissionTimeout = setTimeout(() => {
-      console.warn('Submission timeout, resetting form state')
-      this.resetForm()
-    }, 10000) // 10 second timeout (reduced from 30)
-
+    // Defer state changes to handleSubmit; just trigger native submit
     this.formTarget.requestSubmit()
   }
 
-  handleSubmit(event) {
+  async handleSubmit(event) {
+    // Always prevent navigation; we post via fetch and rely on Turbo Streams updates
+    event.preventDefault()
+
     if (this.isSubmitting || !this.canSubmit()) {
-      event.preventDefault()
       return
     }
 
-    console.log('Form submitted, showing loading state')
+    dlog('Form submitted, showing loading state')
     this.showLoading()
     this.isSubmitting = true
 
     // Fallback: Reset form after 15 seconds if no other reset occurs
     this.fallbackResetTimeout = setTimeout(() => {
       if (this.isSubmitting) {
-        console.log('Fallback timeout reached, resetting form')
+        dlog('Fallback timeout reached, resetting form')
         this.resetForm()
       }
     }, 15000)
+
+    try {
+      const form = this.formTarget
+      const formData = new FormData(form)
+      const token = document.querySelector('meta[name="csrf-token"]')?.content
+
+      const res = await fetch(form.action, {
+        method: 'POST',
+        headers: {
+          'X-CSRF-Token': token || '',
+          'Accept': 'text/html',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData,
+        credentials: 'same-origin'
+      })
+      if (res && res.ok) {
+        // Clear input content immediately after successful POST
+        this.clearTextarea()
+        // Kick a lightweight messages refresh loop as a safety net
+        this.pollForAssistantResponse()
+      }
+      // No navigation. Streaming job will update UI and trigger reset via broadcast.
+    } catch (e) {
+      console.error('Form post failed', e)
+      this.resetForm()
+    }
+  }
+
+  messagesUrl() {
+    try {
+      const url = new URL(window.location.href)
+      const path = url.pathname.replace(/\/conversations\/(\d+)(?:\/.*)?$/, '/conversations/$1/messages')
+      return path + url.search
+    } catch (_) {
+      return null
+    }
+  }
+
+  async pollForAssistantResponse() {
+    const url = this.messagesUrl()
+    if (!url) return
+
+    const start = Date.now()
+    const timeoutMs = 10000 // 10s safety window
+    const intervalMs = 800
+
+    const getLastDomId = () => {
+      const container = document.getElementById('messages')
+      if (!container) return null
+      const nodes = Array.from(container.querySelectorAll('[id^="message_"]'))
+      if (nodes.length === 0) return null
+      const last = nodes[nodes.length - 1]
+      const m = last.id.match(/message_(\d+)/)
+      return m ? parseInt(m[1], 10) : null
+    }
+
+    const initialLastId = getLastDomId()
+
+    while (Date.now() - start < timeoutMs && this.isSubmitting) {
+      try {
+        const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        if (!res.ok) break
+        const html = await res.text()
+        const doc = new DOMParser().parseFromString(html, 'text/html')
+        const newMessages = doc.querySelector('#messages')
+        const current = document.getElementById('messages')
+        if (newMessages && current) {
+          current.innerHTML = newMessages.innerHTML
+          const lastId = getLastDomId()
+          if (!initialLastId || (lastId && lastId > initialLastId)) {
+            // New message appended; reset loading state explicitly in fallback path
+            this.resetForm()
+            break
+          }
+        }
+      } catch (_) {
+        // ignore and continue
+      }
+      await new Promise((r) => setTimeout(r, intervalMs))
+    }
   }
 
   insertQuickReply(event) {
@@ -114,7 +190,7 @@ export default class extends Controller {
   }
 
   hideLoading() {
-    console.log(
+    dlog(
       'hideLoading called, hiding loading indicator and enabling submit button'
     )
     if (this.hasLoadingTarget) {
@@ -126,7 +202,7 @@ export default class extends Controller {
 
   // Called when new message is added to reset form
   resetForm() {
-    console.log('resetForm called, hiding loading and clearing textarea')
+    dlog('resetForm called, hiding loading and clearing textarea')
     this.textareaTarget.value = ''
     this.updateCounter()
     this.hideLoading()
@@ -141,6 +217,15 @@ export default class extends Controller {
     if (this.fallbackResetTimeout) {
       clearTimeout(this.fallbackResetTimeout)
       this.fallbackResetTimeout = null
+    }
+  }
+
+  // Optimistically clear only the textarea (keep loading state)
+  clearTextarea() {
+    if (this.hasTextareaTarget) {
+      this.textareaTarget.value = ''
+      this.updateCounter()
+      this.updateSubmitButton()
     }
   }
 
@@ -181,7 +266,7 @@ export default class extends Controller {
     // Watch for form reset signals in the messages container
     const messagesContainer = document.getElementById('messages')
     if (!messagesContainer) {
-      console.warn(
+      dwarn(
         'Messages container not found, cannot set up form reset observer'
       )
       return
@@ -199,7 +284,7 @@ export default class extends Controller {
                   node.querySelector('[data-form-reset="true"]')
 
             if (resetElement && this.isSubmitting) {
-              console.log('Form reset signal detected, resetting form')
+              dlog('Form reset signal detected, resetting form')
               this.resetForm()
               resetElement.remove() // Clean up the signal element
             }
@@ -213,6 +298,6 @@ export default class extends Controller {
       subtree: true
     })
 
-    console.log('Form reset observer set up successfully')
+    dlog('Form reset observer set up successfully')
   }
 }

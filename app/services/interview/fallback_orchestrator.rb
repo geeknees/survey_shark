@@ -91,13 +91,12 @@ module Interview
                                       .where.not(content: "[スキップ]")
                                       .count
 
-      # Return the question number based on how many user messages we've seen
+      # Ensure at least 1 when preceding messages are only "[スキップ]"
       # 1 user message -> ask question 1 (index 0)
       # 2 user messages -> ask question 2 (index 1)
       # 3 user messages -> ask question 3 (index 2)
-      # 4+ user messages -> finish (return > 3)
-      question_number = user_messages_count
-      question_number
+      # 4+ user messages -> finish (return > FALLBACK_QUESTIONS.length)
+      [user_messages_count, 1].max
     end
   end
 end

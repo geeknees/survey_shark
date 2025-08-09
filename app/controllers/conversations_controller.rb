@@ -69,6 +69,12 @@ class ConversationsController < ApplicationController
     redirect_to @conversation
   end
 
+  # Lightweight messages partial for polling fallback
+  def messages
+    @messages = @conversation.messages.order(:created_at)
+    render partial: "conversations/messages", locals: { messages: @messages }
+  end
+
   private
 
   def set_conversation

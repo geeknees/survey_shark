@@ -1,32 +1,5 @@
 <div class="max-w-4xl mx-auto p-6">
     <div class="bg-white rounded-lg shadow-sm border">
-      <!-- Conversation Complete Check -->
-      <% if @conversation.finished_at.present? %>
-        <script>
-          // Redirect to thank you page after a short delay
-          setTimeout(function() {
-            window.location.href = '<%= project_thank_you_path(@conversation.project) %>';
-          }, 2000);
-        </script>
-
-        <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4 text-center">
-          <div class="text-green-800 font-medium">
-            会話が完了しました。ありがとうございました。
-          </div>
-          <div class="text-green-600 text-sm mt-1">
-            まもなく完了ページに移動します...
-          </div>
-        </div>
-      <% elsif @remaining_turns <= 0 %>
-        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4 text-center">
-          <div class="text-yellow-800 font-medium">
-            ターン数の上限に達しました。
-          </div>
-          <div class="text-yellow-600 text-sm mt-1">
-            インタビューを終了します。
-          </div>
-        </div>
-      <% end %>
     <!-- Progress Header -->
     <div class="border-b p-4">
       <div class="flex justify-between items-center mb-2">
@@ -47,7 +20,9 @@
     <!-- Messages Container -->
     <div class="p-4">
       <%= turbo_stream_from @conversation %>
-      <%= render "messages", messages: @messages %>
+      <div data-controller="messages-refresher">
+        <%= render "messages", messages: @messages %>
+      </div>
 
       <!-- PII Warnings Container -->
       <div id="pii-warnings"></div>
@@ -79,7 +54,7 @@
         <div class="hidden flex items-center justify-center space-x-2 p-3 mb-3 bg-blue-50 rounded-lg"
               data-chat-composer-target="loading">
           <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-          <span class="text-blue-600 text-sm">AIが返信を生成中...</span>
+          <span class="text-blue-600 text-sm">AIが返信を生成中… まもなく表示されます</span>
         </div>
 
         <%= form_with url: create_message_conversation_path(@conversation), method: :post,
@@ -100,7 +75,7 @@
             <div class="flex flex-col space-y-2">
               <%= submit_tag "送信",
                   class: "bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50",
-                  data: { "chat-composer-target": "submit" } %>
+                  data: { "chat-composer-target": "submit", action: "click->chat-composer#submitForm" } %>
 
             </div>
           </div>

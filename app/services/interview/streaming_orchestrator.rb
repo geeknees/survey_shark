@@ -32,9 +32,6 @@ module Interview
         # Enqueue analysis job for finished conversation
         AnalyzeConversationJob.perform_later(@conversation.id)
 
-        # Check if project should be auto-closed
-        @conversation.project.check_and_auto_close!
-
         return "ご協力いただきありがとうございました。インタビューを終了します。"
       end
 
@@ -60,9 +57,9 @@ module Interview
       accumulated_content = ""
       assistant_message = nil
 
-      # Stream the response
-      @llm_client.stream_chat(
-        messages: build_llm_messages(system_prompt, behavior_prompt, messages, user_message.content)
+      # Stream the response (and capture non-stream fallback result)
+      response_text = @llm_client.stream_chat(
+        messages: build_llm_messages(system_prompt, behavior_prompt, messages)
       ) do |chunk|
         accumulated_content += chunk
 
@@ -88,10 +85,19 @@ module Interview
         @broadcast_manager.broadcast_streaming_update(assistant_message, chunk)
       end
 
-      # Final update with complete content
+      # Finalize and broadcast
       if assistant_message
+        # Streaming path: ensure final content saved and broadcast
         assistant_message.update!(content: accumulated_content)
         @broadcast_manager.broadcast_final_update
+      elsif response_text.present?
+        # Non-streaming fallback path: create message now and broadcast
+        assistant_message = @conversation.messages.create!(
+          role: 1,
+          content: response_text
+        )
+        @broadcast_manager.broadcast_final_update
+        accumulated_content = response_text
       end
 
       # Check if conversation is complete
@@ -151,7 +157,7 @@ module Interview
       end
     end
 
-    def build_llm_messages(system_prompt, behavior_prompt, conversation_history, user_message)
+    def build_llm_messages(system_prompt, behavior_prompt, conversation_history)
       messages = []
 
       if system_prompt.present?
@@ -165,8 +171,6 @@ module Interview
       if behavior_prompt.present?
         messages << { role: "system", content: behavior_prompt }
       end
-
-      messages << { role: "user", content: user_message }
 
       messages
     end

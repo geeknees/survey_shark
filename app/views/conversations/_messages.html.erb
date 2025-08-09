@@ -1,4 +1,4 @@
-<div id="messages" class="space-y-4 mb-6 min-h-[200px]">
+<div id="messages" class="space-y-4 mb-6 min-h-[200px] overflow-y-auto" data-controller="messages-scroller">
   <% messages.each do |message| %>
     <%= render "conversations/message", message: message %>
   <% end %>

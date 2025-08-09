@@ -3,7 +3,7 @@ module Interview
     def initialize(conversation)
       @conversation = conversation
       @last_broadcast_time = Time.current
-      @debounce_interval = 0.1 # 100ms debounce
+      @debounce_interval = 0.15 # 150ms debounce to reduce UI thrash
     end
 
     def broadcast_streaming_update(message, chunk)
@@ -54,15 +54,23 @@ module Interview
     private
 
     def broadcast_form_reset
-      # Use a more reliable approach: broadcast a custom Turbo Stream action
+      # Emit multiple reset signals for compatibility with different clients
       Rails.logger.info "Broadcasting form reset event"
 
-      # Use a span element that triggers a custom event when added to DOM
+      # 1) For importmap controller: hidden span in messages container
       Turbo::StreamsChannel.broadcast_action_to(
         @conversation,
         action: "append",
         target: "messages",
         html: "<span id='form-reset-#{Time.current.to_i}' data-form-reset='true' style='display: none;'></span>".html_safe
+      )
+
+      # 2) For legacy public/assets mixin: dispatch a document event
+      Turbo::StreamsChannel.broadcast_action_to(
+        @conversation,
+        action: "append",
+        target: "messages",
+        html: "<script>document.dispatchEvent(new CustomEvent('chat:response-complete'));</script>".html_safe
       )
     end
 

@@ -5,32 +5,46 @@ export default class extends Controller {
 
   connect() {
     this.isSubmitting = false
-
-    // Listen for response complete events
-    this.responseCompleteHandler = () => {
-      this.resetForm()
-    }
-    document.addEventListener(
-      'chat:response-complete',
-      this.responseCompleteHandler
-    )
+    this.setupFormResetObserver()
   }
 
   disconnect() {
-    document.removeEventListener(
-      'chat:response-complete',
-      this.responseCompleteHandler
-    )
+    if (this.formResetObserver) {
+      this.formResetObserver.disconnect()
+    }
   }
 
-  handleSubmit(event) {
+  async handleSubmit(event) {
+    // Prevent navigation and post via fetch
+    event.preventDefault()
+
     if (this.isSubmitting) {
-      event.preventDefault()
       return
     }
 
     this.showLoading()
     this.isSubmitting = true
+
+    try {
+      const form = event.target
+      const formData = new FormData(form)
+      const token = document.querySelector('meta[name="csrf-token"]')?.content
+
+      await fetch(form.action, {
+        method: 'POST',
+        headers: {
+          'X-CSRF-Token': token || '',
+          'Accept': 'text/html',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData,
+        credentials: 'same-origin'
+      })
+      // Broadcasts will update UI and trigger reset
+    } catch (e) {
+      console.error('Skip post failed', e)
+      this.resetForm()
+    }
   }
 
   showLoading() {
@@ -56,5 +70,30 @@ export default class extends Controller {
       this.submitTarget.classList.remove('opacity-50')
     }
     this.isSubmitting = false
+  }
+
+  setupFormResetObserver() {
+    const messagesContainer = document.getElementById('messages')
+    if (!messagesContainer) return
+
+    this.formResetObserver = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            const resetElement =
+              (node.hasAttribute && node.hasAttribute('data-form-reset'))
+                ? node
+                : (node.querySelector && node.querySelector('[data-form-reset="true"]'))
+
+            if (resetElement && this.isSubmitting) {
+              this.resetForm()
+              resetElement.remove()
+            }
+          }
+        })
+      })
+    })
+
+    this.formResetObserver.observe(messagesContainer, { childList: true, subtree: true })
   }
 }

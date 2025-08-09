@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  # ActionCable endpoint for Turbo Streams over WebSocket
+  mount ActionCable.server => "/cable"
   resources :projects do
     member do
       get :generate_invite_link
@@ -27,6 +29,7 @@ Rails.application.routes.draw do
     member do
       post :create_message
       post :skip
+      get :messages
     end
   end
 
