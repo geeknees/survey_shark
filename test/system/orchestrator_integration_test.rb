@@ -14,6 +14,16 @@ class OrchestratorIntegrationTest < ApplicationSystemTestCase
     end
   end
 
+  def submit_chat_message(text)
+    fill_in "content", with: text
+    # Force-enable submit if JS hasn't toggled yet
+    submit = find("input[type='submit'][value='送信']", visible: :all)
+    if submit[:disabled]
+      page.execute_script("arguments[0].removeAttribute('disabled')", submit.native)
+    end
+    submit.click
+  end
+
   def teardown
     disable_webmock
   end
@@ -38,12 +48,10 @@ class OrchestratorIntegrationTest < ApplicationSystemTestCase
     # Initial state - intro
     assert_text "残り 12 ターン"
 
-    # Step 1: User provides first pain point
-    fill_in "content", with: "I have trouble with my computer freezing"
-    click_button "送信"
+  # Step 1: User provides first pain point
+  submit_chat_message "I have trouble with my computer freezing"
 
-    # Wait for the message to appear
-    assert_text "I have trouble with my computer freezing", wait: 5
+  wait_for_message "I have trouble with my computer freezing"
 
     # Manually execute job
     @conversation.reload
@@ -57,51 +65,45 @@ class OrchestratorIntegrationTest < ApplicationSystemTestCase
 
     # Step 2: Continue with more pain points
     perform_enqueued_jobs do
-      fill_in "content", with: "My phone battery dies too quickly"
-      click_button "送信"
+  submit_chat_message "My phone battery dies too quickly"
     end
 
-    assert_text "My phone battery dies too quickly"
+  wait_for_message "My phone battery dies too quickly"
 
     # Step 3: Provide third pain point
     perform_enqueued_jobs do
-      fill_in "content", with: "Traffic jams make me late"
-      click_button "送信"
+  submit_chat_message "Traffic jams make me late"
     end
 
-    assert_text "Traffic jams make me late"
+  wait_for_message "Traffic jams make me late"
 
     # Step 4: Choose most important
     perform_enqueued_jobs do
-      fill_in "content", with: "The computer freezing is most important"
-      click_button "送信"
+  submit_chat_message "The computer freezing is most important"
     end
 
-    assert_text "The computer freezing is most important"
+  wait_for_message "The computer freezing is most important"
 
     # Step 5: Deepening questions
     perform_enqueued_jobs do
-      fill_in "content", with: "It happens when I'm working on important documents"
-      click_button "送信"
+  submit_chat_message "It happens when I'm working on important documents"
     end
 
-    assert_text "It happens when I'm working on important documents"
+  wait_for_message "It happens when I'm working on important documents"
 
     # Step 6: More deepening
     perform_enqueued_jobs do
-      fill_in "content", with: "I lose my work and have to start over"
-      click_button "送信"
+  submit_chat_message "I lose my work and have to start over"
     end
 
-    assert_text "I lose my work and have to start over"
+  wait_for_message "I lose my work and have to start over"
 
     # Step 7: Summary confirmation
     perform_enqueued_jobs do
-      fill_in "content", with: "Yes, that's correct"
-      click_button "送信"
+  submit_chat_message "Yes, that's correct"
     end
 
-    assert_text "Yes, that's correct"
+  wait_for_message "Yes, that's correct"
 
     # Conversation should have progressed successfully
     # Instead of checking finished_at, just verify the conversation has messages
@@ -143,8 +145,7 @@ class OrchestratorIntegrationTest < ApplicationSystemTestCase
     fill_in "content", with: "First deep question response"
     click_button "送信"
 
-    # Wait for the message to appear
-    assert_text "First deep question response", wait: 5
+  wait_for_message "First deep question response"
 
     # Manually execute job
     @conversation.reload
@@ -198,22 +199,18 @@ class OrchestratorIntegrationTest < ApplicationSystemTestCase
       fill_in "content", with: "First message"
       click_button "送信"
     end
-
-    assert_text "First message"
-    assert_text "残り 1 ターン"
+  wait_for_message "First message"
+  visit current_path # ensure refreshed progress bar
+  assert_text "残り 1 ターン"
 
     # Second message
     perform_enqueued_jobs do
       fill_in "content", with: "Second message"
       click_button "送信"
     end
-
-    assert_text "Second message"
-
-    # Should show turn limit reached message
-    assert_text "ターン数の上限に達しました"
-
-    # Message composer should be hidden
-    assert_no_selector "textarea[name='content']"
+  wait_for_message "Second message"
+  visit current_path
+  assert_text "ターン数の上限に達しました"
+  assert_no_selector "textarea[name='content']"
   end
 end

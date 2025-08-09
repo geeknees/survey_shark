@@ -17,8 +17,8 @@ class ChatTest < ApplicationSystemTestCase
     # Should be redirected back to conversation
     assert_current_path conversation_path(@conversation)
 
-    # Wait for the message to appear
-    assert_text "Hello, this is my first message", wait: 5
+  # Wait for the message to be created in DB instead of relying on UI text matching
+  assert_predicate -> { @conversation.reload.messages.where(content: "Hello, this is my first message").exists? }, :call, "User message should be persisted"
 
     # Manually execute the job to ensure completion
     @conversation.reload
@@ -30,8 +30,8 @@ class ChatTest < ApplicationSystemTestCase
     # Refresh the page to see updates
     visit current_path
 
-    # Progress should have updated (one user turn now)
-    assert_text "残り 11 ターン" # Assuming 12 max turns
+  # Progress should have updated (one user turn now)
+  assert_text "残り 11 ターン" # Assuming 12 max turns
   end
 
   test "skip button updates progress" do

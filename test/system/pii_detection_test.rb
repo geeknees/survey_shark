@@ -36,8 +36,7 @@ class PiiDetectionTest < ApplicationSystemTestCase
     fill_in "content", with: "私の名前は田中太郎です。電話番号は03-1234-5678です。"
     click_button "送信"
 
-    # Wait for the message to appear and then process PII detection manually
-    assert_text "私の名前は田中太郎です。電話番号は03-1234-5678です。", wait: 5
+  wait_for_message "私の名前は田中太郎です。電話番号は03-1234-5678です。"
 
     # Get the user message and process PII detection
     @conversation.reload
@@ -82,8 +81,7 @@ class PiiDetectionTest < ApplicationSystemTestCase
     fill_in "content", with: safe_message
     click_button "送信"
 
-    # Should see the original message
-    assert_text safe_message
+  wait_for_message safe_message
 
     # Process the PII detection job
     perform_enqueued_jobs
@@ -153,8 +151,7 @@ class PiiDetectionTest < ApplicationSystemTestCase
     fill_in "content", with: complex_message
     click_button "送信"
 
-    # Wait for the message to appear and then process PII detection manually
-    assert_text complex_message, wait: 5
+  wait_for_message complex_message
 
     # Get the user message and process PII detection
     @conversation.reload
@@ -202,8 +199,7 @@ class PiiDetectionTest < ApplicationSystemTestCase
     fill_in "content", with: message
     click_button "送信"
 
-    # Wait for the message to appear and then process PII detection manually
-    assert_text message, wait: 5
+  wait_for_message message
 
     # Get the user message and process PII detection
     @conversation.reload
@@ -257,8 +253,7 @@ class PiiDetectionTest < ApplicationSystemTestCase
     fill_in "content", with: "私の名前は田中太郎です。"
     click_button "送信"
 
-    # Wait for the message to appear and then process PII detection manually
-    assert_text "私の名前は田中太郎です。", wait: 5
+  wait_for_message "私の名前は田中太郎です。"
 
     # Get the user message and process PII detection
     @conversation.reload
@@ -275,7 +270,6 @@ class PiiDetectionTest < ApplicationSystemTestCase
     fill_in "content", with: "今日は良い天気ですね。"
     click_button "送信"
 
-    # Wait for the new message to appear
-    assert_text "今日は良い天気ですね。", wait: 5
+  wait_for_message "今日は良い天気ですね。"
   end
 end

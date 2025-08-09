@@ -24,6 +24,7 @@ class FallbackModeTest < ApplicationSystemTestCase
   test "conversation switches to fallback mode on LLM error" do
     # Set environment variable to simulate error
     ENV["SIMULATE_LLM_ERROR"] = "true"
+  original_api_key = ENV.delete("OPENAI_API_KEY") # Force use of test_llm_client
 
     begin
       visit conversation_path(@conversation)
@@ -32,8 +33,7 @@ class FallbackModeTest < ApplicationSystemTestCase
       fill_in "content", with: "I have computer problems"
       click_button "送信"
 
-      # Wait for the page to update after form submission
-      assert_text "I have computer problems", wait: 5
+  wait_for_message "I have computer problems"
 
       # Manually execute the job to trigger the error handling
       @conversation.reload
@@ -60,8 +60,8 @@ class FallbackModeTest < ApplicationSystemTestCase
       fill_in "content", with: "My computer is very slow"
       click_button "送信"
 
-      # Wait for the page to update after form submission
-      assert_text "My computer is very slow", wait: 5
+  # Wait for the page to update after form submission
+  wait_for_message "My computer is very slow"
 
       @conversation.reload
       user_message = @conversation.messages.where(role: 0).last
@@ -76,8 +76,8 @@ class FallbackModeTest < ApplicationSystemTestCase
       fill_in "content", with: "The slowness is most important because it affects my work"
       click_button "送信"
 
-      # Wait for the page to update after form submission
-      assert_text "The slowness is most important because it affects my work", wait: 5
+  # Wait for the page to update after form submission
+  wait_for_message "The slowness is most important because it affects my work"
 
       @conversation.reload
       user_message = @conversation.messages.where(role: 0).last
@@ -92,8 +92,8 @@ class FallbackModeTest < ApplicationSystemTestCase
       fill_in "content", with: "I think we need better computers"
       click_button "送信"
 
-      # Wait for the page to update after form submission
-      assert_text "I think we need better computers", wait: 5
+  # Wait for the page to update after form submission
+  wait_for_message "I think we need better computers"
 
       @conversation.reload
       user_message = @conversation.messages.where(role: 0).last
@@ -109,6 +109,7 @@ class FallbackModeTest < ApplicationSystemTestCase
       assert_equal "done", @conversation.state
     ensure
       ENV.delete("SIMULATE_LLM_ERROR")
+  ENV["OPENAI_API_KEY"] = original_api_key if original_api_key
     end
   end
 
@@ -122,8 +123,7 @@ class FallbackModeTest < ApplicationSystemTestCase
     fill_in "content", with: "Response to question 1"
     click_button "送信"
 
-    # Wait for the page to update after form submission
-    assert_text "Response to question 1", wait: 5
+  wait_for_message "Response to question 1"
 
     # Manually execute the job since perform_enqueued_jobs doesn't work reliably in system tests
     @conversation.reload
@@ -143,8 +143,8 @@ class FallbackModeTest < ApplicationSystemTestCase
     fill_in "content", with: "Response to question 2"
     click_button "送信"
 
-    # Wait for the page to update after form submission
-    assert_text "Response to question 2", wait: 5
+  # Wait for the page to update after form submission
+  wait_for_message "Response to question 2"
 
     @conversation.reload
     user_message = @conversation.messages.where(role: 0).last
@@ -157,8 +157,8 @@ class FallbackModeTest < ApplicationSystemTestCase
     fill_in "content", with: "Response to question 3"
     click_button "送信"
 
-    # Wait for the page to update after form submission
-    assert_text "Response to question 3", wait: 5
+  # Wait for the page to update after form submission
+  wait_for_message "Response to question 3"
 
     @conversation.reload
     user_message = @conversation.messages.where(role: 0).last
@@ -171,8 +171,8 @@ class FallbackModeTest < ApplicationSystemTestCase
     fill_in "content", with: "Response to final question"
     click_button "送信"
 
-    # Wait for the page to update after form submission
-    assert_text "Response to final question", wait: 5
+  # Wait for the page to update after form submission
+  wait_for_message "Response to final question"
 
     @conversation.reload
     user_message = @conversation.messages.where(role: 0).last

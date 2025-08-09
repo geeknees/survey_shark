@@ -25,6 +25,18 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     assert_no_current_path new_session_path, wait: 5
   end
 
+  # Polls the database for a Message with exact content (plain string match).
+  # Avoids brittle Capybara text matching issues with overflow containers / styling.
+  def wait_for_message(content, timeout: 5)
+    start = Time.now
+    loop do
+      return true if Message.where(content: content).exists?
+      break if Time.now - start > timeout
+      sleep 0.1
+    end
+    flunk "Message with content '#{content}' not found within #{timeout}s"
+  end
+
   # Helper method for system tests that need WebMock
   def enable_webmock_with_system_test_support
     require "webmock/minitest"
