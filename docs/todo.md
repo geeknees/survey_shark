@@ -1,10 +1,10 @@
 # Survey Shark 開発TODO
 
-## 🔧 コードリファクタリング計画 (2025年8月)
+## 🔧 コードリファクタリング計画 (2025年8月, アップデート)
 
 *詳細は `docs/refactoring_proposals.md` を参照*
 
-### 🚨 高優先度 - 即座に実装推奨
+### 🚨 高優先度 - 即座に実装推奨（アップデート）
 
 #### 1. 重複コードの削減
 - [x] `app/controllers/concerns/project_access.rb` の作成
@@ -13,7 +13,7 @@
   - [x] `check_project_availability` の実装
 - [x] `InvitesController`, `ThankYousController`, `ConversationsController` への適用
 
-#### 2. Interview::Orchestratorクラスの分割
+#### 2. Interview::Orchestratorクラスの分割（継続）
 - [ ] `app/services/interview/state_machine.rb` の作成
 - [ ] `app/services/interview/response_generator.rb` の作成
 - [ ] `app/services/interview/turn_manager.rb` の作成
@@ -24,12 +24,12 @@
 - [ ] トークン生成ロジックの統一
 - [ ] パラメータバリデーションの強化
 
-#### 4. JavaScript層の最適化
-- [ ] `hello_controller.js` の削除（未使用）
-- [ ] `app/javascript/controllers/mixins/loading_state_mixin.js` の作成
+#### 4. JavaScript層の最適化（アップデート）
+- [x] `hello_controller.js` の削除（未使用）
+- [x] `app/javascript/controllers/mixins/loading_state_mixin.js` の作成（済）
 - [ ] `chat_composer_controller.js` の分割とMixin適用
 
-### 🔄 中優先度 - 次のスプリントで実装
+### 🔄 中優先度 - 次のスプリントで実装（アップデート）
 
 #### 5. モデル層の責務分散
 - [ ] `app/models/concerns/project_status_management.rb` の作成
@@ -47,9 +47,9 @@
 - [ ] `app/services/llm/client/mixins/response_processor.rb` の作成
 - [ ] `app/services/llm/message_builder.rb` の作成
 
-#### 8. JavaScript層の統一化
-- [ ] `app/javascript/services/chat_event_manager.js` の作成
-- [ ] `app/javascript/services/form_validator.js` の作成
+#### 8. JavaScript層の統一化（アップデート）
+- [x] `app/javascript/services/chat_event_manager.js` の作成（済）
+- [x] `app/javascript/services/form_validator.js` の作成（済）
 - [ ] イベント管理とバリデーションの統一
 
 #### 9. ヘルパーメソッドの整理

@@ -7,7 +7,8 @@ class Project < ApplicationRecord
   validates :name, presence: true
   validates :initial_question, presence: true
   validates :status, inclusion: { in: %w[draft active closed] }
-  validates :tone, inclusion: { in: %w[polite_soft polite_firm casual_soft casual_firm] }
+  TONES = %w[polite_soft polite_firm casual_soft casual_firm].freeze
+  validates :tone, inclusion: { in: TONES }
   validates :max_responses, presence: true, numericality: { greater_than: 0 }
 
   # For MVP, we'll store custom attributes in a simple format

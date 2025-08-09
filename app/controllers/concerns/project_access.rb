@@ -5,7 +5,7 @@ module ProjectAccess
 
   # Generate anonymous hash for participant identification
   def generate_anon_hash
-    Digest::SHA256.hexdigest("#{Time.current.to_f}-#{SecureRandom.hex(8)}")[0..15]
+    Security::TokenGenerator.generate_anon_hash
   end
 
   # Find project by invite token

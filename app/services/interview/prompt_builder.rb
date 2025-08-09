@@ -60,10 +60,12 @@ module Interview
       case tone
       when "polite_soft"
         "優しく丁寧"
-      when "casual_friendly"
-        "親しみやすく気軽"
-      when "professional"
-        "プロフェッショナルで礼儀正しい"
+      when "polite_firm"
+        "丁寧かつ端的"
+      when "casual_soft"
+        "親しみやすく穏やか"
+      when "casual_firm"
+        "カジュアルだが明快"
       else
         "丁寧"
       end

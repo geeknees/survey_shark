@@ -2,6 +2,45 @@
 
 ## 概要
 
+[2025-08 アップデート]
+
+現状のコードベースを再確認し、以下の点を反映して計画をアップデートします。
+
+- JavaScript 層の現状
+  - LoadingStateMixin は既に存在します: `app/javascript/controllers/mixins/loading_state_mixin.js`
+  - グローバルなイベント管理とフォームバリデーションのサービスも既に存在します:
+    - `app/javascript/services/chat_event_manager.js`
+    - `app/javascript/services/form_validator.js`
+  - 未使用の `hello_controller.js` が残存しています（削除対象）。
+  - UI フィードバックで Stimulus コントローラ内から `element.className` を全置換する実装が散見されます（例: Copy ボタン）。トランジションが効かない・Tailwind のパージに引っかかる等の問題を招くため、`classList` のトグル or インライン style での最小変更に統一します。
+
+- ドメインロジックの整合性
+  - `Project` の tone 候補は `polite_soft|polite_firm|casual_soft|casual_firm` ですが、`Interview::PromptBuilder#tone_description` は `casual_friendly|professional` 等の表記ゆれがあり不整合です。トーン定義を一元化して整合性を担保します。
+
+- Orchestrator 分割
+  - `Interview::Orchestrator` は引き続き大きく、`StateMachine`/`ResponseGenerator`/`TurnManager` への分割は未実施です。優先度高のまま維持します。
+
+- セキュリティ
+  - トークン生成ロジックが `InviteLink` モデルや `ProjectAccess` concern に分散しています。`Security::TokenGenerator` に集約します。
+
+- モデルの責務
+  - `Conversation` に状態・残ターン等の便宜メソッドが不足しており、サービス層へ処理が流出しています。concern 化で集約します。
+
+おすすめの実施順（2スプリント）
+
+- Sprint 1（即効性の高いクイックウィン）
+  1) 未使用 `hello_controller.js` の削除
+  2) UI フィードバック方針のガイド化と既存箇所の修正（className 全置換撤廃）
+  3) トーン定義の一元化（`Project::TONES` と `PromptBuilder` の整合）
+  4) `Security::TokenGenerator` の導入（`generate_anon_hash`/invite token の集約）
+  5) LoadingStateMixin の適用範囲を拡大（chat_composer など）
+
+- Sprint 2（構造の是正）
+  6) Orchestrator の分割（StateMachine/ResponseGenerator/TurnManager）
+  7) `Conversation` の concern 追加（state/progress）
+  8) JS サービス（chat_event_manager/form_validator）の各コントローラへの組み込み・重複除去
+
+
 Survey Sharkアプリケーションの全体的なコード分析を行い、保守性、可読性、拡張性を向上させるためのリファクタリング提案をまとめました。このアプリケーションはRuby on Railsで構築されたインタビューチャットシステムで、プロジェクト管理、会話管理、分析機能を提供しています。
 
 ## 1. コントローラー層のリファクタリング
@@ -196,7 +235,7 @@ module Interview
 end
 ```
 
-### 3.2 LLMクライアントの抽象化改善
+### 3.2 LLMクライアントの抽象化改善（アップデート）
 
 **問題点:**
 - `LLM::Client::OpenAI`で具体的なAPI呼び出しとエラーハンドリングが混在
@@ -225,12 +264,12 @@ end
 
 ## 4. JavaScript層のリファクタリング
 
-### 4.1 Stimulusコントローラーの最適化
+### 4.1 Stimulusコントローラーの最適化（アップデート）
 
 **問題点:**
 - `chat_composer_controller.js`が200行を超える大きなファイル
 - 複数のコントローラーで類似したローディング状態管理とイベントハンドリング
-- `hello_controller.js`が未使用のままサンプルコードが残存
+- `hello_controller.js`が未使用のままサンプルコードが残存（実コードに未参照。削除対象）
 
 **提案:**
 ```javascript
@@ -357,7 +396,7 @@ export class FormValidator {
 
 ## 5. ビュー層のリファクタリング
 
-### 5.1 部分テンプレートの活用
+### 5.1 部分テンプレートの活用（維持）
 
 **問題点:**
 - プロジェクト一覧とフォームで重複するHTML構造
@@ -480,7 +519,7 @@ module Interview::TestHelpers
 end
 ```
 
-### 7.2 JavaScript テストの追加
+### 7.2 JavaScript テストの追加（維持）
 
 **問題点:**
 - Stimulusコントローラーにユニットテストがない
@@ -591,21 +630,21 @@ end
 
 ## 実装優先度
 
-### 高優先度（即座に実装推奨）
+### 高優先度（即座に実装推奨, アップデート）
 1. 重複コードの削減（Concernsの作成）
 2. Orchestratorクラスの分割
 3. セキュリティ関連の改善
 4. **chat_composer_controller.jsの分割とMixin適用**
 5. **未使用のhello_controller.jsの削除**
 
-### 中優先度（次のスプリントで実装）
+### 中優先度（次のスプリントで実装, アップデート）
 1. モデルの責務分散
 2. ヘルパーメソッドの整理
 3. テストの改善
 4. **JavaScriptイベント管理の統一**
 5. **フォームバリデーションの外部化**
 
-### 低優先度（リファクタリング完了後）
+### 低優先度（リファクタリング完了後, 維持）
 1. ビューの部分テンプレート化
 2. 設定の外部化
 3. バックグラウンドジョブの最適化
