@@ -96,7 +96,7 @@ module Interview
       # 2 user messages -> ask question 2 (index 1)
       # 3 user messages -> ask question 3 (index 2)
       # 4+ user messages -> finish (return > FALLBACK_QUESTIONS.length)
-      [user_messages_count, 1].max
+      [ user_messages_count, 1 ].max
     end
   end
 end
