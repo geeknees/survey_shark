@@ -5,14 +5,14 @@ class ProjectFlowTest < ActiveSupport::TestCase
     project = Project.create!(
       name: "Flow Project",
       goal: "Understand users",
-      must_ask: ["Topic A", "Topic B"],
-      never_ask: ["Secret"],
+      must_ask: [ "Topic A", "Topic B" ],
+      never_ask: [ "Secret" ],
       limits: { "max_turns" => 15, "max_deep" => 3 },
       status: "active",
       max_responses: 100
     )
-    assert_equal ["Topic A", "Topic B"], project.must_ask
-    assert_equal ["Secret"], project.never_ask
+    assert_equal [ "Topic A", "Topic B" ], project.must_ask
+    assert_equal [ "Secret" ], project.never_ask
     assert_equal({ "max_turns" => 15, "max_deep" => 3 }, project.limits)
     assert project.active?
   end
