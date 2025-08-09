@@ -72,6 +72,7 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_redirected_to project_path(project)
+  assert_equal "Invite link generated successfully.", flash[:notice]
     assert_equal project, InviteLink.last.project
   end
 
@@ -84,6 +85,7 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_redirected_to project_path(project)
+  assert_equal "Invite link generated successfully.", flash[:notice]
     assert_equal existing_link, project.invite_links.first
   end
 
