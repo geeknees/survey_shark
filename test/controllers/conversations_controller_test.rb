@@ -63,4 +63,32 @@ class ConversationsControllerTest < ActionDispatch::IntegrationTest
     # Check that progress shows (assuming default max_turns is 12)
     assert_select "div", text: /残り 9 ターン/
   end
+
+  test "should render messages partial via messages endpoint" do
+    # Seed a couple of messages so the partial has content
+    m1 = @conversation.messages.create!(role: 0, content: "Hello")
+    m2 = @conversation.messages.create!(role: 1, content: "Hi there")
+
+    get messages_conversation_path(@conversation)
+    assert_response :success
+
+    # Should contain the messages container and individual message DOM ids
+    assert_includes @response.body, 'id="messages"'
+    assert_includes @response.body, "message_#{m1.id}"
+    assert_includes @response.body, "message_#{m2.id}"
+  end
+
+  test "should not create message when max turns reached and mark finished" do
+    # Exhaust user turns to the limit
+    max_turns = (@conversation.project.limits.dig('max_turns') || 12).to_i
+    max_turns.times { |i| @conversation.messages.create!(role: 0, content: "User #{i}") }
+
+    assert_no_difference "Message.count" do
+      post create_message_conversation_path(@conversation), params: { content: "One more" }
+    end
+    assert_redirected_to conversation_path(@conversation)
+
+    # Controller should mark as finished when limit hit
+    assert_not_nil @conversation.reload.finished_at
+  end
 end
