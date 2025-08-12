@@ -80,7 +80,7 @@ class ConversationsControllerTest < ActionDispatch::IntegrationTest
 
   test "should not create message when max turns reached and mark finished" do
     # Exhaust user turns to the limit
-    max_turns = (@conversation.project.limits.dig('max_turns') || 12).to_i
+    max_turns = (@conversation.project.limits.dig("max_turns") || 12).to_i
     max_turns.times { |i| @conversation.messages.create!(role: 0, content: "User #{i}") }
 
     assert_no_difference "Message.count" do
