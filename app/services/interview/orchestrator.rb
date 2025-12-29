@@ -6,8 +6,15 @@ module Interview
       @conversation = conversation
       @project = @conversation.project
       @llm_client = llm_client || default_llm_client
-      @deepening_turn_count = 0
       @prompt_builder = Interview::PromptBuilder.new(@project)
+      @state_machine = Interview::StateMachine.new(@conversation, @project)
+      @turn_manager = Interview::TurnManager.new(@conversation)
+      @response_generator = Interview::ResponseGenerator.new(
+        @conversation,
+        @project,
+        @llm_client,
+        @prompt_builder
+      )
     end
 
     def process_user_message(user_message)
@@ -18,41 +25,31 @@ module Interview
 
       begin
         # Check turn limit before processing
-        user_turn_count = @conversation.messages.where(role: 0).count.to_i
-        max_turns = (@project.limits.dig("max_turns") || 12).to_i
-
-        if user_turn_count >= max_turns
-          # Mark conversation as finished if turn limit reached
-          @conversation.update!(finished_at: Time.current) unless @conversation.finished_at.present?
-
-          # Create a final assistant message indicating completion
-          @conversation.messages.create!(
-            role: 1, # assistant
-            content: "ご協力いただきありがとうございました。インタビューを終了します。"
-          )
-
-          # Enqueue analysis job for finished conversation
-          AnalyzeConversationJob.perform_later(@conversation.id)
-
-          return "ご協力いただきありがとうございました。インタビューを終了します。"
+        if @state_machine.turn_limit_reached?
+          return handle_turn_limit_reached
         end
 
-        # Determine next state and update conversation
-        next_state = determine_next_state(user_message)
-
-        # Update conversation state first
+        # Track current state before transition
         old_state = @conversation.state
+
+        # Determine next state (using current deepening count)
+        next_state = @state_machine.determine_next_state(user_message, @turn_manager.deepening_turn_count)
+
+        # Update conversation state
         @conversation.update!(state: next_state)
 
-        # Track deepening turns after state update
-        if old_state == "deepening" && next_state == "deepening"
-          @deepening_turn_count += 1
-        elsif next_state == "deepening" && old_state != "deepening"
-          @deepening_turn_count = 1
+        # Track state transitions AFTER determining next state
+        # Only track if we're staying in or entering deepening state
+        if next_state == "deepening"
+          @turn_manager.track_state_transition(old_state, next_state)
         end
 
         # Generate assistant response
-        assistant_content = generate_assistant_response(next_state, user_message)
+        assistant_content = @response_generator.generate_response(
+          next_state,
+          user_message,
+          @turn_manager.deepening_turn_count
+        )
 
         # Create assistant message
         @conversation.messages.create!(
@@ -62,10 +59,7 @@ module Interview
 
         # Check if conversation is complete
         if next_state == "done"
-          @conversation.update!(finished_at: Time.current)
-
-          # Enqueue analysis job for finished conversation
-          AnalyzeConversationJob.perform_later(@conversation.id)
+          handle_conversation_completion
         end
 
         assistant_content
@@ -86,124 +80,27 @@ module Interview
 
     private
 
-    def determine_next_state(user_message)
-      current_state = @conversation.state
-      max_deep = @project.limits.dig("max_deep") || 2
+    def handle_turn_limit_reached
+      # Mark conversation as finished if turn limit reached
+      @conversation.update!(finished_at: Time.current) unless @conversation.finished_at.present?
 
-      case current_state
-      when "intro"
-        # Stay in intro for the initial system message, move to enumerate after user's first real response
-        if user_message.content == "[インタビュー開始]"
-          "intro"  # Stay in intro state for initial greeting
-        else
-          "enumerate"  # Move to enumerate after user's first response
-        end
-      when "enumerate"
-        # Check if we have enough pain points (up to 3) or user indicates they're done
-        pain_points = extract_pain_points_from_conversation
-        if pain_points.length >= 3 || user_indicates_completion?(user_message.content) || user_message.content == "[スキップ]"
-          "recommend"
-        else
-          "enumerate"
-        end
-      when "recommend"
-        # Move to choose phase after recommendation
-        "choose"
-      when "choose"
-        # After user chooses, start deepening
-        "deepening"
-      when "deepening"
-        # Count deepening turns by looking at current turn count
-        current_turn_count = count_deepening_turns
-        if current_turn_count >= max_deep
-          "summary_check"
-        else
-          "deepening"
-        end
-      when "summary_check"
-        # After summary confirmation, we're done
-        "done"
-      else
-        "done"
-      end
-    end
-
-    def generate_assistant_response(state, user_message)
-      messages = build_conversation_history
-      system_prompt = @prompt_builder.system_prompt
-      behavior_prompt = @prompt_builder.behavior_prompt_for_state(state)
-
-      # For summary_check state, include actual summary
-      if state == "summary_check"
-        summary = generate_conversation_summary
-        behavior_prompt = behavior_prompt.gsub("{summary}", summary)
-      end
-
-      # For recommend state, identify most important pain point
-      if state == "recommend"
-        most_important = identify_most_important_pain_point
-        behavior_prompt = behavior_prompt.gsub("{most_important}", most_important)
-      end
-
-      @llm_client.generate_response(
-        system_prompt: system_prompt,
-        behavior_prompt: behavior_prompt,
-        conversation_history: messages,
-        user_message: user_message.content
+      # Create a final assistant message indicating completion
+      @conversation.messages.create!(
+        role: 1, # assistant
+        content: "ご協力いただきありがとうございました。インタビューを終了します。"
       )
+
+      # Enqueue analysis job for finished conversation
+      AnalyzeConversationJob.perform_later(@conversation.id)
+
+      "ご協力いただきありがとうございました。インタビューを終了します。"
     end
 
-    def build_conversation_history
-      @conversation.messages.order(:created_at).map do |message|
-        {
-          role: message.user? ? "user" : "assistant",
-          content: message.content
-        }
-      end
-    end
+    def handle_conversation_completion
+      @conversation.update!(finished_at: Time.current)
 
-    def extract_pain_points_from_conversation
-      # Simple extraction - in real implementation this would be more sophisticated
-      user_messages = @conversation.messages.where(role: 0).pluck(:content)
-      # Exclude system messages and skip messages
-      user_messages.reject { |msg| msg == "[スキップ]" || msg == "[インタビュー開始]" }
-    end
-
-    def user_indicates_completion?(content)
-      completion_indicators = [ "以上", "それだけ", "終わり", "ない", "特にない" ]
-      completion_indicators.any? { |indicator| content.include?(indicator) }
-    end
-
-    def count_deepening_turns
-      # If we're currently in deepening state, count how many times we've been called
-      # For the test scenario, we need to return a value based on the current message being processed
-      if @conversation.state == "deepening"
-        # Simple approach: assume each message in deepening state is a turn
-        # Use instance variable that tracks this per process call
-        @deepening_turn_count ||= 0
-        @deepening_turn_count += 1
-        @deepening_turn_count
-      else
-        0
-      end
-    end
-
-    def identify_most_important_pain_point
-      # Simple heuristic - in real implementation this would use LLM analysis
-      pain_points = extract_pain_points_from_conversation
-      pain_points.first || "お話しいただいた課題"
-    end
-
-    def generate_conversation_summary
-      user_messages = @conversation.messages.where(role: 0)
-                                          .where.not(content: "[スキップ]")
-                                          .pluck(:content)
-
-      if user_messages.any?
-        "主な課題: #{user_messages.join('、')}"
-      else
-        "お話しいただいた内容"
-      end
+      # Enqueue analysis job for finished conversation
+      AnalyzeConversationJob.perform_later(@conversation.id)
     end
 
     def default_llm_client
@@ -211,6 +108,7 @@ module Interview
         require_relative "../llm/client/fake"
         LLM::Client::Fake.new
       else
+        require_relative "../llm/client/openai"
         LLM::Client::OpenAI.new
       end
     end

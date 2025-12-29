@@ -1,4 +1,7 @@
 class Conversation < ApplicationRecord
+  include ConversationStateMachine
+  include ConversationProgress
+
   belongs_to :project
   belongs_to :participant, optional: true
   has_many :messages, dependent: :destroy

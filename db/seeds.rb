@@ -6,10 +6,10 @@
 if Admin.count == 0
   Admin.create!(
     email_address: "admin@example.com",
-    password: "password123",
-    password_confirmation: "password123"
+    password: "password",
+    password_confirmation: "password"
   )
-  puts "Created sample admin: admin@example.com / password123"
+  puts "Created sample admin: admin@example.com / password"
 end
 
 # Create sample project with limit 10
@@ -26,7 +26,7 @@ sample_project = Project.find_or_create_by!(name: "サンプルプロジェク�
   project.tone = "polite_soft"
   project.limits = {
     "max_turns" => 12,
-    "max_deep" => 2
+    "max_deep" => 5
   }
   project.status = "active"
   project.max_responses = 10

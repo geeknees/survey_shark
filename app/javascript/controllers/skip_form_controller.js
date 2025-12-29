@@ -1,5 +1,12 @@
 import { Controller } from '@hotwired/stimulus'
 
+// Debug helpers (enable by setting window.SURVEY_SHARK_DEBUG = true)
+const dwarn = (...args) => {
+  try {
+    if (window && window.SURVEY_SHARK_DEBUG) console.warn(...args)
+  } catch (_) {}
+}
+
 export default class extends Controller {
   static targets = ['submit', 'loading']
 
@@ -12,6 +19,9 @@ export default class extends Controller {
     if (this.formResetObserver) {
       this.formResetObserver.disconnect()
     }
+    if (this.fallbackResetTimeout) {
+      clearTimeout(this.fallbackResetTimeout)
+    }
   }
 
   async handleSubmit(event) {
@@ -19,27 +29,41 @@ export default class extends Controller {
     event.preventDefault()
 
     if (this.isSubmitting) {
+      dwarn('Skip already submitting, ignoring')
       return
     }
 
     this.showLoading()
     this.isSubmitting = true
 
+    // Fallback timeout
+    this.fallbackResetTimeout = setTimeout(() => {
+      if (this.isSubmitting) {
+        dwarn('Skip fallback timeout reached, resetting form')
+        this.resetForm()
+      }
+    }, 20000)
+
     try {
       const form = event.target
       const formData = new FormData(form)
       const token = document.querySelector('meta[name="csrf-token"]')?.content
 
-      await fetch(form.action, {
+      const res = await fetch(form.action, {
         method: 'POST',
         headers: {
           'X-CSRF-Token': token || '',
-          'Accept': 'text/html',
+          Accept: 'text/html',
           'X-Requested-With': 'XMLHttpRequest'
         },
         body: formData,
         credentials: 'same-origin'
       })
+
+      if (!res.ok) {
+        dwarn('Skip post returned non-OK status:', res.status)
+        this.resetForm()
+      }
       // Broadcasts will update UI and trigger reset
     } catch (e) {
       console.error('Skip post failed', e)
@@ -58,6 +82,10 @@ export default class extends Controller {
   }
 
   resetForm() {
+    if (this.fallbackResetTimeout) {
+      clearTimeout(this.fallbackResetTimeout)
+      this.fallbackResetTimeout = null
+    }
     this.hideLoading()
   }
 
@@ -74,16 +102,20 @@ export default class extends Controller {
 
   setupFormResetObserver() {
     const messagesContainer = document.getElementById('messages')
-    if (!messagesContainer) return
+    if (!messagesContainer) {
+      dwarn('Messages container not found for skip form reset observer')
+      return
+    }
 
     this.formResetObserver = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         mutation.addedNodes.forEach((node) => {
           if (node.nodeType === Node.ELEMENT_NODE) {
             const resetElement =
-              (node.hasAttribute && node.hasAttribute('data-form-reset'))
+              node.hasAttribute && node.hasAttribute('data-form-reset')
                 ? node
-                : (node.querySelector && node.querySelector('[data-form-reset="true"]'))
+                : node.querySelector &&
+                  node.querySelector('[data-form-reset="true"]')
 
             if (resetElement && this.isSubmitting) {
               this.resetForm()
@@ -94,6 +126,9 @@ export default class extends Controller {
       })
     })
 
-    this.formResetObserver.observe(messagesContainer, { childList: true, subtree: true })
+    this.formResetObserver.observe(messagesContainer, {
+      childList: true,
+      subtree: true
+    })
   }
 }

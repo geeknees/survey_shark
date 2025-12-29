@@ -23,7 +23,7 @@ class ProjectTest < ActiveSupport::TestCase
     assert_equal [], project.must_ask
     assert_equal [], project.never_ask
     assert_equal "polite_soft", project.tone
-    assert_equal({ "max_turns" => 12, "max_deep" => 2 }, project.limits)
+    assert_equal({ "max_turns" => 12, "max_deep" => 5 }, project.limits)
     assert_equal "draft", project.status
     assert_equal 50, project.max_responses
   end

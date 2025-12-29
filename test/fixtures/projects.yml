@@ -7,7 +7,7 @@ one:
   must_ask: []
   never_ask: []
   tone: polite_soft
-  limits: { 'max_turns': 12, 'max_deep': 2 }
+  limits: { 'max_turns': 12, 'max_deep': 5 }
   status: active
   max_responses: 50
   responses_count: 0

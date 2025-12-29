@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_10_26_100545) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_29_162034) do
   create_table "admins", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email_address"
@@ -86,7 +86,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_10_26_100545) do
     t.datetime "created_at", null: false
     t.text "goal"
     t.text "initial_question", default: "まず、日常生活で感じている課題や不便なことを3つまで教えてください。どんな小さなことでも構いません。"
-    t.json "limits", default: {"max_turns" => 12, "max_deep" => 2}
+    t.json "limits", default: {"max_turns" => 12, "max_deep" => 5}
     t.integer "max_responses", default: 50
     t.json "must_ask", default: []
     t.string "name", null: false

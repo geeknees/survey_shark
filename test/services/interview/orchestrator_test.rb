@@ -70,6 +70,9 @@ class Interview::OrchestratorTest < ActiveSupport::TestCase
     @conversation.update!(state: "deepening")
     @project.update!(limits: { "max_deep" => 1 })
 
+    # Recreate orchestrator to pick up updated project settings
+    @orchestrator = Interview::Orchestrator.new(@conversation, llm_client: @fake_client)
+
     # First deepening turn
     user_message = @conversation.messages.create!(role: :user, content: "More details about the problem")
     @orchestrator.process_user_message(user_message)
