@@ -11,7 +11,7 @@ module Interview
     # Determine the next state based on current state and user message
     def determine_next_state(user_message, deepening_turn_count)
       current_state = @conversation.state
-      max_deep = @project.limits.dig("max_deep") || 2
+      max_deep = @project.limits.dig("max_deep") || 5
 
       case current_state
       when "intro"

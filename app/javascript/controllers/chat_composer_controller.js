@@ -2,10 +2,14 @@ import { Controller } from '@hotwired/stimulus'
 
 // Debug helpers (enable by setting window.SURVEY_SHARK_DEBUG = true)
 const dlog = (...args) => {
-  try { if (window && window.SURVEY_SHARK_DEBUG) console.log(...args) } catch (_) {}
+  try {
+    if (window && window.SURVEY_SHARK_DEBUG) console.log(...args)
+  } catch (_) {}
 }
 const dwarn = (...args) => {
-  try { if (window && window.SURVEY_SHARK_DEBUG) console.warn(...args) } catch (_) {}
+  try {
+    if (window && window.SURVEY_SHARK_DEBUG) console.warn(...args)
+  } catch (_) {}
 }
 
 export default class extends Controller {
@@ -77,6 +81,7 @@ export default class extends Controller {
     event.preventDefault()
 
     if (this.isSubmitting || !this.canSubmit()) {
+      dwarn('Skipping submit: already submitting or cannot submit')
       return
     }
 
@@ -84,13 +89,13 @@ export default class extends Controller {
     this.showLoading()
     this.isSubmitting = true
 
-    // Fallback: Reset form after 15 seconds if no other reset occurs
+    // Fallback: Reset form after 20 seconds if no other reset occurs
     this.fallbackResetTimeout = setTimeout(() => {
       if (this.isSubmitting) {
-        dlog('Fallback timeout reached, resetting form')
+        dwarn('Fallback timeout reached (20s), resetting form')
         this.resetForm()
       }
-    }, 15000)
+    }, 20000)
 
     try {
       const form = this.formTarget
@@ -101,7 +106,7 @@ export default class extends Controller {
         method: 'POST',
         headers: {
           'X-CSRF-Token': token || '',
-          'Accept': 'text/html',
+          Accept: 'text/html',
           'X-Requested-With': 'XMLHttpRequest'
         },
         body: formData,
@@ -112,6 +117,9 @@ export default class extends Controller {
         this.clearTextarea()
         // Kick a lightweight messages refresh loop as a safety net
         this.pollForAssistantResponse()
+      } else {
+        dwarn('Form post returned non-OK status:', res?.status)
+        this.resetForm()
       }
       // No navigation. Streaming job will update UI and trigger reset via broadcast.
     } catch (e) {
@@ -123,7 +131,10 @@ export default class extends Controller {
   messagesUrl() {
     try {
       const url = new URL(window.location.href)
-      const path = url.pathname.replace(/\/conversations\/(\d+)(?:\/.*)?$/, '/conversations/$1/messages')
+      const path = url.pathname.replace(
+        /\/conversations\/(\d+)(?:\/.*)?$/,
+        '/conversations/$1/messages'
+      )
       return path + url.search
     } catch (_) {
       return null
@@ -132,11 +143,14 @@ export default class extends Controller {
 
   async pollForAssistantResponse() {
     const url = this.messagesUrl()
-    if (!url) return
+    if (!url) {
+      dwarn('Cannot poll for response: no messages URL')
+      return
+    }
 
     const start = Date.now()
-    const timeoutMs = 10000 // 10s safety window
-    const intervalMs = 800
+    const timeoutMs = 15000 // 15s safety window
+    const intervalMs = 1000
 
     const getLastDomId = () => {
       const container = document.getElementById('messages')
@@ -152,8 +166,13 @@ export default class extends Controller {
 
     while (Date.now() - start < timeoutMs && this.isSubmitting) {
       try {
-        const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-        if (!res.ok) break
+        const res = await fetch(url, {
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        if (!res.ok) {
+          dwarn('Poll fetch failed with status:', res.status)
+          break
+        }
         const html = await res.text()
         const doc = new DOMParser().parseFromString(html, 'text/html')
         const newMessages = doc.querySelector('#messages')
@@ -163,14 +182,21 @@ export default class extends Controller {
           const lastId = getLastDomId()
           if (!initialLastId || (lastId && lastId > initialLastId)) {
             // New message appended; reset loading state explicitly in fallback path
+            dlog('New message detected, resetting form from poll')
             this.resetForm()
             break
           }
         }
-      } catch (_) {
+      } catch (e) {
+        dwarn('Poll iteration failed:', e)
         // ignore and continue
       }
       await new Promise((r) => setTimeout(r, intervalMs))
+    }
+
+    // If we exit the loop while still submitting, timeout occurred
+    if (this.isSubmitting) {
+      dwarn('Poll timeout reached without new message')
     }
   }
 
@@ -266,9 +292,7 @@ export default class extends Controller {
     // Watch for form reset signals in the messages container
     const messagesContainer = document.getElementById('messages')
     if (!messagesContainer) {
-      dwarn(
-        'Messages container not found, cannot set up form reset observer'
-      )
+      dwarn('Messages container not found, cannot set up form reset observer')
       return
     }
 

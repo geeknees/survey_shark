@@ -1,8 +1,15 @@
 import { Controller } from '@hotwired/stimulus'
 
 // Debug helpers (enable by setting window.SURVEY_SHARK_DEBUG = true)
+const dlog = (...args) => {
+  try {
+    if (window && window.SURVEY_SHARK_DEBUG) console.log(...args)
+  } catch (_) {}
+}
 const dwarn = (...args) => {
-  try { if (window && window.SURVEY_SHARK_DEBUG) console.warn(...args) } catch (_) {}
+  try {
+    if (window && window.SURVEY_SHARK_DEBUG) console.warn(...args)
+  } catch (_) {}
 }
 
 // Fallback: if Turbo Stream broadcasts are missed (e.g., page redirects
@@ -18,6 +25,11 @@ export default class extends Controller {
     // Small initial delay to allow Turbo stream subscription to settle
     this._attempt = 0
     this._timer = setTimeout(() => this.refreshLoop(), 700)
+    dlog(
+      'messages-refresher connected, will attempt',
+      this.attemptsValue,
+      'refreshes'
+    )
   }
 
   disconnect() {
@@ -34,15 +46,25 @@ export default class extends Controller {
     this._attempt += 1
     if (this._attempt < this.attemptsValue) {
       this._timer = setTimeout(() => this.refreshLoop(), this.intervalValue)
+    } else {
+      dlog('messages-refresher: completed', this._attempt, 'attempts')
     }
   }
 
   async refreshOnce() {
     const url = this.messagesUrl()
-    if (!url) return
+    if (!url) {
+      dwarn('messages-refresher: no URL available')
+      return
+    }
 
-    const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-    if (!res.ok) return
+    const res = await fetch(url, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    if (!res.ok) {
+      dwarn('messages-refresher: fetch returned status', res.status)
+      return
+    }
     const html = await res.text()
     const doc = new DOMParser().parseFromString(html, 'text/html')
     const newMessages = doc.querySelector('#messages')
@@ -55,7 +77,9 @@ export default class extends Controller {
       // Auto-scroll to bottom to keep latest messages in view
       try {
         current.scrollTop = current.scrollHeight
-      } catch (_) {}
+      } catch (e) {
+        dwarn('messages-refresher: scroll failed', e)
+      }
     }
   }
 
@@ -63,9 +87,13 @@ export default class extends Controller {
     try {
       const url = new URL(window.location.href)
       // /conversations/:id/messages
-      const path = url.pathname.replace(/\/conversations\/(\d+)(?:\/.*)?$/, '/conversations/$1/messages')
+      const path = url.pathname.replace(
+        /\/conversations\/(\d+)(?:\/.*)?$/,
+        '/conversations/$1/messages'
+      )
       return path + url.search
-    } catch (_) {
+    } catch (e) {
+      dwarn('messages-refresher: URL parsing failed', e)
       return null
     }
   }
