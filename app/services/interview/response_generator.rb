@@ -10,31 +10,53 @@ module Interview
 
     # Generate assistant response for the given state
     def generate_response(state, user_message, deepening_turn_count = 0)
-      messages = build_conversation_history
-      system_prompt = @prompt_builder.system_prompt
-      behavior_prompt = @prompt_builder.behavior_prompt_for_state(state, deepening_turn_count)
-
-      # For summary_check state, include actual summary
-      if state == "summary_check"
+      # For structured states, use predefined questions directly without LLM
+      # This ensures consistent, appropriate questions at each stage
+      case state
+      when "intro", "enumerate", "choose", "deepening"
+        generate_structured_response(state, deepening_turn_count)
+      when "summary_check"
+        # Use LLM to generate a natural summary
         summary = generate_conversation_summary
-        behavior_prompt = behavior_prompt.gsub("{summary}", summary)
-      end
-
-      # For recommend state, identify most important pain point
-      if state == "recommend"
+        behavior_prompt = @prompt_builder.behavior_prompt_for_state(state, deepening_turn_count)
+        behavior_prompt.gsub("{summary}", summary).split("\n\n").last
+      when "recommend"
+        # Use LLM to identify and recommend the most important pain point
+        messages = build_conversation_history
+        system_prompt = @prompt_builder.system_prompt
         most_important = identify_most_important_pain_point
+        behavior_prompt = @prompt_builder.behavior_prompt_for_state(state, deepening_turn_count)
         behavior_prompt = behavior_prompt.gsub("{most_important}", most_important)
-      end
 
-      @llm_client.generate_response(
-        system_prompt: system_prompt,
-        behavior_prompt: behavior_prompt,
-        conversation_history: messages,
-        user_message: user_message.content
-      )
+        @llm_client.generate_response(
+          system_prompt: system_prompt,
+          behavior_prompt: behavior_prompt,
+          conversation_history: messages,
+          user_message: user_message.content
+        )
+      else
+        # For other states, use LLM
+        messages = build_conversation_history
+        system_prompt = @prompt_builder.system_prompt
+        behavior_prompt = @prompt_builder.behavior_prompt_for_state(state, deepening_turn_count)
+
+        @llm_client.generate_response(
+          system_prompt: system_prompt,
+          behavior_prompt: behavior_prompt,
+          conversation_history: messages,
+          user_message: user_message.content
+        )
+      end
     end
 
     private
+
+    def generate_structured_response(state, deepening_turn_count)
+      # Return the predefined question directly
+      behavior_prompt = @prompt_builder.behavior_prompt_for_state(state, deepening_turn_count)
+      # Extract just the question part (after the directive)
+      behavior_prompt.split("\n\n").last
+    end
 
     def build_conversation_history
       @conversation.messages.order(:created_at).map do |message|

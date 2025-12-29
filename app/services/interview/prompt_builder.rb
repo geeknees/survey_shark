@@ -38,13 +38,13 @@ module Interview
     end
 
     def behavior_prompt_for_state(state, deepening_turn = 0)
-      case state
+      question = case state
       when "intro"
         @project.initial_question.present? ?
           @project.initial_question :
           "まず、日常生活で感じている課題や不便なことを3つまで教えてください。どんな小さなことでも構いません。"
       when "enumerate"
-        "他にも何か課題や不便に感じていることはありますか？最大3つまでお聞かせください。"
+        "他にも何か課題や不便に感じていることはありますか？（最大3つまで）"
       when "recommend"
         "お聞かせいただいた中で、特に重要だと思われるのは「{most_important}」のようですが、いかがでしょうか？"
       when "choose"
@@ -56,6 +56,9 @@ module Interview
       else
         "ありがとうございました。"
       end
+
+      # Return as a directive for the LLM to follow exactly
+      "次の質問を、そのままの文言で相手に尋ねてください（一切変更を加えず、そのまま出力してください）：\n\n#{question}"
     end
 
     private
@@ -63,15 +66,15 @@ module Interview
     def deepening_prompt(turn_count)
       case turn_count
       when 0, 1
-        "その課題について、もう少し詳しく教えてください。具体的にはどのような場面で困っていますか？"
+        "その課題について、もう少し詳しく教えていただけますか？具体的にはどのような場面でお困りですか？"
       when 2
-        "それはどのくらいの頻度で発生しますか？また、どの程度困っていますか？"
+        "それはどのくらいの頻度で発生しますか？また、どの程度お困りですか？"
       when 3
-        "これまでに何か対処しようと試したことはありますか？あれば、その結果も教えてください。"
+        "これまでに何か対処しようと試されたことはありますか？あれば、その結果も教えてください。"
       when 4
-        "理想的には、その課題がどのように解決されるとよいと思いますか？"
+        "理想的には、その課題がどのように解決されるとよいとお考えですか？"
       else
-        "その課題について、他に何か補足したいことはありますか？"
+        "その課題について、他に何か補足しておきたいことはありますか？"
       end
     end
 
