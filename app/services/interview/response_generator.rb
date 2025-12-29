@@ -76,6 +76,7 @@ module Interview
     def generate_conversation_summary
       user_messages = @conversation.messages.where(role: 0)
                                           .where.not(content: "[スキップ]")
+                                          .where.not(content: "[インタビュー開始]")
                                           .pluck(:content)
 
       if user_messages.any?
@@ -88,8 +89,14 @@ module Interview
     def extract_pain_points_from_conversation
       # Simple extraction - in real implementation this would be more sophisticated
       user_messages = @conversation.messages.where(role: 0).pluck(:content)
-      # Exclude system messages and skip messages
-      user_messages.reject { |msg| msg == "[スキップ]" || msg == "[インタビュー開始]" }
+      # Exclude system messages, skip messages, and completion indicators
+      completion_patterns = [ "以上", "それだけ", "終わり", "ない", "特にない" ]
+      user_messages.reject { |msg|
+        msg == "[スキップ]" ||
+        msg == "[インタビュー開始]" ||
+        msg.strip.empty? ||
+        completion_patterns.any? { |pattern| msg.include?(pattern) && msg.length < 10 }
+      }
     end
   end
 end

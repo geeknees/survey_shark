@@ -72,8 +72,12 @@ module Interview
     def extract_pain_points_from_conversation
       # Simple extraction - in real implementation this would be more sophisticated
       user_messages = @conversation.messages.where(role: 0).pluck(:content)
-      # Exclude system messages and skip messages
-      user_messages.reject { |msg| msg == "[スキップ]" || msg == "[インタビュー開始]" }
+      # Exclude system messages, skip messages, and completion indicators
+      user_messages.reject { |msg|
+        msg == "[スキップ]" ||
+        msg == "[インタビュー開始]" ||
+        user_indicates_completion?(msg)
+      }
     end
 
     def user_indicates_completion?(content)
