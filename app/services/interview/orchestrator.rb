@@ -108,6 +108,7 @@ module Interview
         require_relative "../llm/client/fake"
         LLM::Client::Fake.new
       else
+        require_relative "../llm/client/openai"
         LLM::Client::OpenAI.new
       end
     end

@@ -24,8 +24,7 @@ module LLM
             parameters: {
               model: @model,
               messages: messages,
-              temperature: @temperature,
-              m：ｑax_tokens: 500
+              temperature: @temperature
             }
           )
 
@@ -64,8 +63,7 @@ module LLM
               parameters: {
                 model: @model,
                 messages: formatted_messages,
-                temperature: @temperature,
-                max_tokens: 500
+                temperature: @temperature
               }
             )
 
@@ -121,7 +119,6 @@ module LLM
               model: @model,
               messages: messages,
               temperature: @temperature,
-              max_tokens: 500,
               stream: proc do |chunk, _bytesize|
                 # ruby-openai returns parsed data directly
                 delta = chunk.dig("choices", 0, "delta", "content")
@@ -150,8 +147,7 @@ module LLM
               parameters: {
                 model: @model,
                 messages: messages,
-                temperature: @temperature,
-                max_tokens: 500
+                temperature: @temperature
               }
             )
             content = response.dig("choices", 0, "message", "content") || ""
