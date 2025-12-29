@@ -29,6 +29,15 @@ class ThankYousController < ApplicationController
         user_agent: request.user_agent
       )
 
+      # Create initial system message to trigger AI's first question
+      initial_message = conversation.messages.create!(
+        role: 0, # user
+        content: "[インタビュー開始]"
+      )
+
+      # Start the interview with the initial message
+      StreamAssistantResponseJob.perform_later(conversation.id, initial_message.id)
+
       # Clear session data
       session[:participant_age] = nil
       session[:participant_attributes] = nil
