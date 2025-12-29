@@ -14,14 +14,14 @@
 - [x] `InvitesController`, `ThankYousController`, `ConversationsController` への適用
 
 #### 2. Interview::Orchestratorクラスの分割（継続）
-- [ ] `app/services/interview/state_machine.rb` の作成
-- [ ] `app/services/interview/response_generator.rb` の作成
-- [ ] `app/services/interview/turn_manager.rb` の作成
-- [ ] 既存Orchestratorの簡略化とリファクタリング
+- [x] `app/services/interview/state_machine.rb` の作成
+- [x] `app/services/interview/response_generator.rb` の作成
+- [x] `app/services/interview/turn_manager.rb` の作成
+- [x] 既存Orchestratorの簡略化とリファクタリング
 
 #### 3. セキュリティ関連の改善
-- [ ] `app/services/security/token_generator.rb` の作成
-- [ ] トークン生成ロジックの統一
+- [x] `app/services/security/token_generator.rb` の作成
+- [x] トークン生成ロジックの統一
 - [ ] パラメータバリデーションの強化
 
 #### 4. JavaScript層の最適化（アップデート）
@@ -38,9 +38,9 @@
 - [ ] `Project` モデルの簡略化
 
 #### 6. Conversationモデルの拡充
-- [ ] `app/models/concerns/conversation_state_machine.rb` の作成
-- [ ] `app/models/concerns/conversation_progress.rb` の作成
-- [ ] 状態管理ロジックのモデルへの移行
+- [x] `app/models/concerns/conversation_state_machine.rb` の作成
+- [x] `app/models/concerns/conversation_progress.rb` の作成
+- [x] 状態管理ロジックのモデルへの移行
 
 #### 7. LLMクライアントの抽象化改善
 - [ ] `app/services/llm/client/mixins/retryable_api_client.rb` の作成

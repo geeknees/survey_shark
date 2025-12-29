@@ -5,7 +5,7 @@ module LLM
     class OpenAI < Base
       MAX_RESPONSE_LENGTH = 400
 
-      def initialize(api_key: nil, model: "gpt-4", temperature: 0.2)
+      def initialize(api_key: nil, model: "gpt-5.2", temperature: 0.2)
         @api_key = api_key || ENV["OPENAI_API_KEY"]
         @model = model
         @temperature = temperature
@@ -25,7 +25,7 @@ module LLM
               model: @model,
               messages: messages,
               temperature: @temperature,
-              max_tokens: 500
+              m：ｑax_tokens: 500
             }
           )
 
