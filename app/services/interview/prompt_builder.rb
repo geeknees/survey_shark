@@ -37,7 +37,7 @@ module Interview
       PROMPT
     end
 
-    def behavior_prompt_for_state(state)
+    def behavior_prompt_for_state(state, deepening_turn = 0)
       case state
       when "intro"
         @project.initial_question.present? ?
@@ -50,7 +50,7 @@ module Interview
       when "choose"
         "挙げていただいた課題の中から、最も重要だと思うものを1つ選んでいただけますか？"
       when "deepening"
-        "その課題について、もう少し詳しく教えてください。具体的にはどのような場面で困っていますか？"
+        deepening_prompt(deepening_turn)
       when "summary_check"
         "これまでのお話をまとめさせていただきます。内容に間違いがないか確認していただけますか？\n\n{summary}\n\nこの内容で間違いありませんか？"
       else
@@ -59,6 +59,21 @@ module Interview
     end
 
     private
+
+    def deepening_prompt(turn_count)
+      case turn_count
+      when 0, 1
+        "その課題について、もう少し詳しく教えてください。具体的にはどのような場面で困っていますか？"
+      when 2
+        "それはどのくらいの頻度で発生しますか？また、どの程度困っていますか？"
+      when 3
+        "これまでに何か対処しようと試したことはありますか？あれば、その結果も教えてください。"
+      when 4
+        "理想的には、その課題がどのように解決されるとよいと思いますか？"
+      else
+        "その課題について、他に何か補足したいことはありますか？"
+      end
+    end
 
     def tone_description(tone)
       case tone

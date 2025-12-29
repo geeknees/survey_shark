@@ -32,24 +32,24 @@ module Interview
         # Track current state before transition
         old_state = @conversation.state
 
-        # Increment deepening count BEFORE determining next state if currently in deepening
-        if old_state == "deepening"
-          @turn_manager.track_state_transition("deepening", "deepening")
-        end
-
-        # Determine next state
+        # Determine next state (using current deepening count)
         next_state = @state_machine.determine_next_state(user_message, @turn_manager.deepening_turn_count)
 
         # Update conversation state
         @conversation.update!(state: next_state)
 
-        # Track state transitions for non-deepening cases
-        if old_state != "deepening" && next_state == "deepening"
+        # Track state transitions AFTER determining next state
+        # Only track if we're staying in or entering deepening state
+        if next_state == "deepening"
           @turn_manager.track_state_transition(old_state, next_state)
         end
 
         # Generate assistant response
-        assistant_content = @response_generator.generate_response(next_state, user_message)
+        assistant_content = @response_generator.generate_response(
+          next_state,
+          user_message,
+          @turn_manager.deepening_turn_count
+        )
 
         # Create assistant message
         @conversation.messages.create!(

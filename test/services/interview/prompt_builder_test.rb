@@ -12,7 +12,7 @@ class Interview::PromptBuilderTest < ActiveSupport::TestCase
     @project.update!(
       goal: "Understand user pain points",
       tone: "polite_soft",
-      limits: { "max_deep" => 2 },
+      limits: { "max_deep" => 5 },
       must_ask: [ "age", "location" ],
       never_ask: [ "income", "personal details" ]
     )
@@ -20,7 +20,7 @@ class Interview::PromptBuilderTest < ActiveSupport::TestCase
     system_prompt = @prompt_builder.system_prompt
 
     assert_includes system_prompt, "優しく丁寧な口調"
-    assert_includes system_prompt, "最大2回まで"
+    assert_includes system_prompt, "5回程度"
     assert_includes system_prompt, "Understand user pain points"
     assert_includes system_prompt, "age"
     assert_includes system_prompt, "location"

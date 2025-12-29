@@ -26,7 +26,7 @@ sample_project = Project.find_or_create_by!(name: "サンプルプロジェク�
   project.tone = "polite_soft"
   project.limits = {
     "max_turns" => 12,
-    "max_deep" => 2
+    "max_deep" => 5
   }
   project.status = "active"
   project.max_responses = 10

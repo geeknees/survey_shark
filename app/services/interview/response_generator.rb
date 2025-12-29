@@ -9,10 +9,10 @@ module Interview
     end
 
     # Generate assistant response for the given state
-    def generate_response(state, user_message)
+    def generate_response(state, user_message, deepening_turn_count = 0)
       messages = build_conversation_history
       system_prompt = @prompt_builder.system_prompt
-      behavior_prompt = @prompt_builder.behavior_prompt_for_state(state)
+      behavior_prompt = @prompt_builder.behavior_prompt_for_state(state, deepening_turn_count)
 
       # For summary_check state, include actual summary
       if state == "summary_check"
