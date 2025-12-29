@@ -4,6 +4,8 @@ module LLM
   module Client
     class OpenAI < Base
       MAX_RESPONSE_LENGTH = 400
+      MAX_RETRIES = 1
+      RETRY_SLEEP = 1
 
       def initialize(api_key: nil, model: "gpt-5.2", temperature: 0.2)
         @api_key = api_key || ENV["OPENAI_API_KEY"]
@@ -17,38 +19,8 @@ module LLM
 
       def generate_response(system_prompt:, behavior_prompt:, conversation_history:, user_message:)
         messages = build_messages(system_prompt, behavior_prompt, conversation_history, user_message)
-
-        retry_count = 0
-        begin
-          response = @client.chat(
-            parameters: {
-              model: @model,
-              messages: messages,
-              temperature: @temperature
-            }
-          )
-
-          content = response.dig("choices", 0, "message", "content") || ""
-          truncate_response(content)
-        rescue ::OpenAI::Error => e
-          Rails.logger.error "OpenAI API error: #{e.message}"
-          if retry_count < 1
-            retry_count += 1
-            Rails.logger.info "Retrying OpenAI request (attempt #{retry_count + 1})"
-            sleep(1)
-            retry
-          end
-          raise OpenAIError.new("API error after retry: #{e.message}")
-        rescue => e
-          Rails.logger.error "OpenAI API error: #{e.message}"
-          if retry_count < 1
-            retry_count += 1
-            Rails.logger.info "Retrying OpenAI request (attempt #{retry_count + 1})"
-            sleep(2)
-            retry
-          end
-          raise OpenAIError.new("API error after retry: #{e.message}")
-        end
+        content = call_api_with_retry(messages)
+        truncate_response(content)
       end
 
       def stream_chat(messages:, **opts, &block)
@@ -58,36 +30,41 @@ module LLM
           stream_response(formatted_messages, &block)
         else
           # Non-streaming fallback
-          begin
-            response = @client.chat(
-              parameters: {
-                model: @model,
-                messages: formatted_messages,
-                temperature: @temperature
-              }
-            )
-
-            content = response.dig("choices", 0, "message", "content") || ""
-            truncate_response(content)
-          rescue ::OpenAI::Error => e
-            Rails.logger.error "OpenAI API error: #{e.message}"
-            raise OpenAIError.new("API error: #{e.message}")
-          rescue => e
-            Rails.logger.error "OpenAI API error: #{e.message}"
-            raise OpenAIError.new("API error: #{e.message}")
-          end
+          content = call_api_with_retry(formatted_messages)
+          truncate_response(content)
         end
       end
 
       private
 
+      def call_api_with_retry(messages)
+        retry_count = 0
+        begin
+          response = @client.chat(
+            parameters: {
+              model: @model,
+              messages: messages,
+              temperature: @temperature
+            }
+          )
+          response.dig("choices", 0, "message", "content") || ""
+        rescue ::OpenAI::Error, StandardError => e
+          Rails.logger.error "OpenAI API error: #{e.message}"
+          if retry_count < MAX_RETRIES
+            retry_count += 1
+            Rails.logger.info "Retrying OpenAI request (attempt #{retry_count + 1})"
+            sleep(RETRY_SLEEP)
+            retry
+          end
+          raise OpenAIError.new("API error after retry: #{e.message}")
+        end
+      end
+
       def build_messages(system_prompt, behavior_prompt, conversation_history, user_message)
         messages = []
 
         # System message
-        if system_prompt.present?
-          messages << { role: "system", content: system_prompt }
-        end
+        messages << { role: "system", content: system_prompt } if system_prompt.present?
 
         # Conversation history
         conversation_history.each do |msg|
@@ -95,10 +72,7 @@ module LLM
         end
 
         # Current behavior prompt + user message
-        if behavior_prompt.present?
-          messages << { role: "system", content: behavior_prompt }
-        end
-
+        messages << { role: "system", content: behavior_prompt } if behavior_prompt.present?
         messages << { role: "user", content: user_message }
 
         messages
@@ -120,7 +94,6 @@ module LLM
               messages: messages,
               temperature: @temperature,
               stream: proc do |chunk, _bytesize|
-                # ruby-openai returns parsed data directly
                 delta = chunk.dig("choices", 0, "delta", "content")
 
                 if delta
@@ -128,7 +101,6 @@ module LLM
 
                   # Check length limit
                   if accumulated_content.length > MAX_RESPONSE_LENGTH
-                    # Truncate and stop streaming
                     truncated = truncate_response(accumulated_content)
                     remaining = truncated[accumulated_content.length - delta.length..-1]
                     yield(remaining) if remaining.present?
@@ -140,26 +112,12 @@ module LLM
               end
             }
           )
-        rescue => _e
+        rescue => e
           # Fall back to non-streaming on any error
-          begin
-            response = @client.chat(
-              parameters: {
-                model: @model,
-                messages: messages,
-                temperature: @temperature
-              }
-            )
-            content = response.dig("choices", 0, "message", "content") || ""
-            accumulated_content = content
-            yield(truncate_response(content)) if block_given?
-          rescue ::OpenAI::Error => e
-            Rails.logger.error "OpenAI API error in fallback: #{e.message}" if defined?(Rails)
-            raise OpenAIError.new("API error: #{e.message}")
-          rescue => e
-            Rails.logger.error "OpenAI API error in fallback: #{e.message}" if defined?(Rails)
-            raise OpenAIError.new("API error: #{e.message}")
-          end
+          Rails.logger.error "OpenAI streaming error: #{e.message}, falling back to non-streaming" if defined?(Rails)
+          content = call_api_with_retry(messages)
+          accumulated_content = content
+          yield(truncate_response(content)) if block_given?
         end
 
         truncate_response(accumulated_content)
