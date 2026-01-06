@@ -1,3 +1,5 @@
+# ABOUTME: Manages interview state transitions based on conversation context.
+# ABOUTME: Encapsulates rules for moving between interview phases.
 module Interview
   # Manages conversation state transitions and determines next state based on user input
   class StateMachine
@@ -13,7 +15,7 @@ module Interview
       current_state = @conversation.state
       # Reload project to get latest limits
       @project.reload
-      max_deep = @project.limits.dig("max_deep") || 5
+      max_deep = (@project.limits.dig("max_deep") || 5).to_i
 
       case current_state
       when "intro"

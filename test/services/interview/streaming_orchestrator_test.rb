@@ -1,3 +1,5 @@
+# ABOUTME: Exercises streaming interview orchestration behavior.
+# ABOUTME: Verifies state transitions and streaming responses.
 require "test_helper"
 require_relative "../../../app/services/interview/streaming_orchestrator"
 
@@ -36,6 +38,16 @@ class Interview::StreamingOrchestratorTest < ActiveSupport::TestCase
 
     second = @conversation.messages.create!(role: :user, content: "More details")
     @orchestrator.process_user_message_with_streaming(second)
+    assert_equal "summary_check", @conversation.reload.state
+  end
+
+  test "handles string max_deep without error" do
+    @conversation.update!(state: "deepening", meta: { "deepening_turn_count" => 1 })
+    @project.update!(limits: @project.limits.merge("max_deep" => "1"))
+
+    user_message = @conversation.messages.create!(role: :user, content: "More details")
+    @orchestrator.process_user_message_with_streaming(user_message)
+
     assert_equal "summary_check", @conversation.reload.state
   end
 
