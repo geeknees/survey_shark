@@ -70,6 +70,13 @@ export default class extends Controller {
     const newMessages = doc.querySelector('#messages')
     const current = document.getElementById('messages')
 
+    const newProgress = doc.querySelector('#conversation_progress')
+    const currentProgress = document.getElementById('conversation_progress')
+
+    if (newProgress && currentProgress) {
+      currentProgress.innerHTML = newProgress.innerHTML
+    }
+
     if (newMessages && current) {
       // Replace inner content to avoid losing the container reference
       current.innerHTML = newMessages.innerHTML

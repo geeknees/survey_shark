@@ -8,7 +8,6 @@ module Interview
       @llm_client = llm_client || default_llm_client
       @prompt_builder = Interview::PromptBuilder.new(@project)
       @state_machine = Interview::StateMachine.new(@conversation, @project)
-      @turn_manager = Interview::TurnManager.new(@conversation)
       @response_generator = Interview::ResponseGenerator.new(
         @conversation,
         @project,
@@ -32,29 +31,48 @@ module Interview
         # Track current state before transition
         old_state = @conversation.state
 
+        current_deepening_turn_count = @conversation.meta&.dig("deepening_turn_count").to_i
+
         # Determine next state (using current deepening count)
-        next_state = @state_machine.determine_next_state(user_message, @turn_manager.deepening_turn_count)
+        next_state = @state_machine.determine_next_state(user_message, current_deepening_turn_count)
+
+        updated_deepening_turn_count = current_deepening_turn_count
+        if next_state == "deepening"
+          updated_deepening_turn_count = (old_state == "deepening") ? current_deepening_turn_count + 1 : 1
+        end
 
         # Update conversation state
-        @conversation.update!(state: next_state)
-
-        # Track state transitions AFTER determining next state
-        # Only track if we're staying in or entering deepening state
-        if next_state == "deepening"
-          @turn_manager.track_state_transition(old_state, next_state)
-        end
+        @conversation.update!(
+          state: next_state,
+          meta: @conversation.meta.merge("deepening_turn_count" => updated_deepening_turn_count)
+        )
 
         # Generate assistant response
         assistant_content = @response_generator.generate_response(
           next_state,
           user_message,
-          @turn_manager.deepening_turn_count
+          updated_deepening_turn_count
         )
+
+        debug_meta = if debug_enabled?
+          {
+            "debug" => {
+              "state" => next_state,
+              "user_turn_count" => @conversation.messages.where(role: 0).count.to_i,
+              "max_turns" => (@project.limits.dig("max_turns") || 12).to_i,
+              "deepening_turn_count" => updated_deepening_turn_count.to_i,
+              "max_deep" => (@project.limits.dig("max_deep") || 5).to_i
+            }
+          }
+        else
+          {}
+        end
 
         # Create assistant message
         @conversation.messages.create!(
           role: 1, # assistant
-          content: assistant_content
+          content: assistant_content,
+          meta: debug_meta
         )
 
         # Check if conversation is complete
@@ -79,6 +97,10 @@ module Interview
     end
 
     private
+
+    def debug_enabled?
+      ENV["INTERVIEW_DEBUG"].to_s == "true" || @conversation.meta&.dig("debug_mode") == true
+    end
 
     def handle_turn_limit_reached
       # Mark conversation as finished if turn limit reached

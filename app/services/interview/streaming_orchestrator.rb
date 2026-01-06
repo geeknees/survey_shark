@@ -5,6 +5,7 @@ module Interview
       @project = conversation.project
       @llm_client = llm_client || (Rails.env.test? ? test_llm_client : LLM::Client::OpenAI.new)
       @prompt_builder = Interview::PromptBuilder.new(@project)
+      @state_machine = Interview::StateMachine.new(@conversation, @project)
       @broadcast_manager = Interview::BroadcastManager.new(@conversation)
     end
 
@@ -35,14 +36,25 @@ module Interview
         return "ご協力いただきありがとうございました。インタビューを終了します。"
       end
 
-      # Determine next state
-      next_state = determine_next_state(user_message)
-      @conversation.update!(state: next_state)
+      # Determine next state (using persisted deepening count)
+      old_state = @conversation.state
+      current_deepening_turn_count = persisted_deepening_turn_count
+      next_state = @state_machine.determine_next_state(user_message, current_deepening_turn_count)
+
+      updated_deepening_turn_count = current_deepening_turn_count
+      if next_state == "deepening"
+        updated_deepening_turn_count = (old_state == "deepening") ? current_deepening_turn_count + 1 : 1
+      end
+
+      @conversation.update!(
+        state: next_state,
+        meta: @conversation.meta.merge("deepening_turn_count" => updated_deepening_turn_count)
+      )
 
       # Build messages for LLM
       messages = build_conversation_history
       system_prompt = @prompt_builder.system_prompt
-      behavior_prompt = @prompt_builder.behavior_prompt_for_state(next_state)
+      behavior_prompt = @prompt_builder.behavior_prompt_for_state(next_state, updated_deepening_turn_count)
 
       # Handle special prompts that need interpolation
       if next_state == "summary_check"
@@ -57,6 +69,8 @@ module Interview
       accumulated_content = ""
       assistant_message = nil
 
+      debug_meta = debug_enabled? ? build_debug_meta(next_state, updated_deepening_turn_count) : {}
+
       # Stream the response (and capture non-stream fallback result)
       response_text = @llm_client.stream_chat(
         messages: build_llm_messages(system_prompt, behavior_prompt, messages)
@@ -67,7 +81,8 @@ module Interview
         if assistant_message.nil?
           assistant_message = @conversation.messages.create!(
             role: 1, # assistant
-            content: chunk
+            content: chunk,
+            meta: debug_meta
           )
           # Broadcast the new message to the messages list
           Turbo::StreamsChannel.broadcast_append_to(
@@ -94,7 +109,8 @@ module Interview
         # Non-streaming fallback path: create message now and broadcast
         assistant_message = @conversation.messages.create!(
           role: 1,
-          content: response_text
+          content: response_text,
+          meta: debug_meta
         )
         @broadcast_manager.broadcast_final_update
         accumulated_content = response_text
@@ -110,42 +126,25 @@ module Interview
 
     private
 
-    def determine_next_state(user_message)
-      # Same logic as regular orchestrator
-      current_state = @conversation.state
-      max_deep = @project.limits.dig("max_deep") || 2
+    def persisted_deepening_turn_count
+      @conversation.meta&.dig("deepening_turn_count").to_i
+    end
 
-      case current_state
-      when "intro"
-        # Stay in intro for the initial system message, move to enumerate after user's first real response
-        if user_message.content == "[インタビュー開始]"
-          "intro"  # Stay in intro state for initial greeting
-        else
-          "enumerate"  # Move to enumerate after user's first response
-        end
-      when "enumerate"
-        pain_points = extract_pain_points_from_conversation
-        if pain_points.length >= 3 || user_indicates_completion?(user_message.content)
-          "recommend"
-        else
-          "enumerate"
-        end
-      when "recommend"
-        "choose"
-      when "choose"
-        "deepening"
-      when "deepening"
-        deepening_turns = count_deepening_turns
-        if deepening_turns >= max_deep
-          "summary_check"
-        else
-          "deepening"
-        end
-      when "summary_check"
-        "done"
-      else
-        "done"
-      end
+    def build_debug_meta(next_state, deepening_turn_count)
+      user_turn_count = @conversation.messages.where(role: 0).count.to_i
+      {
+        "debug" => {
+          "state" => next_state,
+          "user_turn_count" => user_turn_count,
+          "max_turns" => (@project.limits.dig("max_turns") || 12).to_i,
+          "deepening_turn_count" => deepening_turn_count.to_i,
+          "max_deep" => (@project.limits.dig("max_deep") || 5).to_i
+        }
+      }
+    end
+
+    def debug_enabled?
+      ENV["INTERVIEW_DEBUG"].to_s == "true" || @conversation.meta&.dig("debug_mode") == true
     end
 
     def build_conversation_history
@@ -175,28 +174,14 @@ module Interview
       messages
     end
 
-    def extract_pain_points_from_conversation
-      user_messages = @conversation.messages.where(role: 0).pluck(:content)
-      user_messages.reject { |msg| msg == "[スキップ]" }
-    end
-
-    def user_indicates_completion?(content)
-      completion_indicators = [ "以上", "それだけ", "終わり", "ない", "特にない" ]
-      completion_indicators.any? { |indicator| content.include?(indicator) }
-    end
-
-    def count_deepening_turns
-      messages_since_deepening = @conversation.messages.where(role: 0)
-                                                    .where("created_at > ?", 5.minutes.ago)
-                                                    .count
-      # Ensure we're working with integers to avoid comparison errors
-      count_value = messages_since_deepening.to_i
-      [ count_value - 1, 0 ].max
-    end
-
     def identify_most_important_pain_point
       pain_points = extract_pain_points_from_conversation
       pain_points.first || "お話しいただいた課題"
+    end
+
+    def extract_pain_points_from_conversation
+      user_messages = @conversation.messages.where(role: 0).pluck(:content)
+      user_messages.reject { |msg| msg == "[スキップ]" || msg == "[インタビュー開始]" }
     end
 
     def generate_conversation_summary

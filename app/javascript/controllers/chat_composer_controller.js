@@ -177,6 +177,13 @@ export default class extends Controller {
         const doc = new DOMParser().parseFromString(html, 'text/html')
         const newMessages = doc.querySelector('#messages')
         const current = document.getElementById('messages')
+
+        const newProgress = doc.querySelector('#conversation_progress')
+        const currentProgress = document.getElementById('conversation_progress')
+        if (newProgress && currentProgress) {
+          currentProgress.innerHTML = newProgress.innerHTML
+        }
+
         if (newMessages && current) {
           current.innerHTML = newMessages.innerHTML
           const lastId = getLastDomId()
