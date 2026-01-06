@@ -1,3 +1,5 @@
+# ABOUTME: Integration tests for conversation message flow and progress rendering.
+# ABOUTME: Ensures controller endpoints reflect remaining turns correctly.
 require "test_helper"
 
 class ConversationsControllerTest < ActionDispatch::IntegrationTest
@@ -73,6 +75,8 @@ class ConversationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     # Should contain the messages container and individual message DOM ids
+    assert_includes @response.body, 'id="conversation_progress"'
+    assert_match(/残り 11 ターン/, @response.body)
     assert_includes @response.body, 'id="messages"'
     assert_includes @response.body, "message_#{m1.id}"
     assert_includes @response.body, "message_#{m2.id}"

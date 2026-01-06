@@ -1,9 +1,9 @@
+<%# ABOUTME: Renders the conversation page with progress, messages, and composer. %>
+<%# ABOUTME: Uses Turbo updates for live conversation progress and messages. %>
 <div class="max-w-4xl mx-auto p-6">
     <div class="bg-white rounded-lg shadow-sm border">
     <!-- Progress Header -->
-    <div id="conversation_progress">
-      <%= render "conversations/progress", conversation: @conversation %>
-    </div>
+    <%= render "conversations/progress", conversation: @conversation %>
 
     <!-- Messages Container -->
     <div class="p-4">

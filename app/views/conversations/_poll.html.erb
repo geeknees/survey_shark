@@ -1,5 +1,5 @@
-<div id="conversation_progress">
-  <%= render "conversations/progress", conversation: conversation %>
-</div>
+<%# ABOUTME: Poll response wrapper for conversation progress and messages. %>
+<%# ABOUTME: Keeps progress markup aligned with Turbo stream updates. %>
+<%= render "conversations/progress", conversation: conversation %>
 
 <%= render "conversations/messages", messages: messages %>

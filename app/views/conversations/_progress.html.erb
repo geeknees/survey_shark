@@ -1,18 +1,22 @@
+<%# ABOUTME: Renders the interview progress header with remaining turns and bar. %>
+<%# ABOUTME: Includes a stable wrapper id for Turbo and polling updates. %>
 <% user_turn_count = conversation.messages.where(role: 0).count.to_i %>
 <% max_turns = (conversation.project.limits.dig("max_turns") || 12).to_i %>
 <% remaining_turns = [max_turns - user_turn_count, 0].max %>
 
-<div class="border-b p-4">
-  <div class="flex justify-between items-center mb-2">
-    <h2 class="text-lg font-semibold text-gray-900">インタビュー</h2>
-    <div class="text-sm text-gray-600">
-      残り <%= remaining_turns %> ターン
+<div id="conversation_progress">
+  <div class="border-b p-4">
+    <div class="flex justify-between items-center mb-2">
+      <h2 class="text-lg font-semibold text-gray-900">インタビュー</h2>
+      <div class="text-sm text-gray-600">
+        残り <%= remaining_turns %> ターン
+      </div>
     </div>
-  </div>
 
-  <div class="w-full bg-gray-200 rounded-full h-2">
-    <div class="bg-blue-500 h-2 rounded-full transition-all duration-300"
-         style="width: <%= max_turns.zero? ? 0 : ((user_turn_count.to_f / max_turns) * 100).round(1) %>%">
+    <div class="w-full bg-gray-200 rounded-full h-2">
+      <div class="bg-blue-500 h-2 rounded-full transition-all duration-300"
+           style="width: <%= max_turns.zero? ? 0 : ((user_turn_count.to_f / max_turns) * 100).round(1) %>%">
+      </div>
     </div>
   </div>
 </div>
