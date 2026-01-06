@@ -27,6 +27,14 @@ module Interview
 
     def broadcast_final_update(reset_form: true)
       begin
+        # Broadcast progress header update
+        Turbo::StreamsChannel.broadcast_replace_to(
+          @conversation,
+          target: "conversation_progress",
+          partial: "conversations/progress",
+          locals: { conversation: @conversation }
+        )
+
         # Broadcast complete message list update
         Turbo::StreamsChannel.broadcast_replace_to(
           @conversation,

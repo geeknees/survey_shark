@@ -1,20 +1,8 @@
 <div class="max-w-4xl mx-auto p-6">
     <div class="bg-white rounded-lg shadow-sm border">
     <!-- Progress Header -->
-    <div class="border-b p-4">
-      <div class="flex justify-between items-center mb-2">
-        <h2 class="text-lg font-semibold text-gray-900">インタビュー</h2>
-        <div class="text-sm text-gray-600">
-          残り <%= @remaining_turns %> ターン
-        </div>
-      </div>
-
-      <!-- Progress Bar -->
-      <div class="w-full bg-gray-200 rounded-full h-2">
-        <div class="bg-blue-500 h-2 rounded-full transition-all duration-300"
-             style="width: <%= (@user_turn_count.to_f / @max_turns * 100).round(1) %>%">
-        </div>
-      </div>
+    <div id="conversation_progress">
+      <%= render "conversations/progress", conversation: @conversation %>
     </div>
 
     <!-- Messages Container -->
@@ -62,7 +50,7 @@
           <span class="text-blue-600 text-sm">AIが返信を生成中… まもなく表示されます</span>
         </div>
 
-        <%= form_with url: create_message_conversation_path(@conversation), method: :post,
+        <%= form_with url: create_message_conversation_path(@conversation, debug: params[:debug]), method: :post,
                       local: true, class: "space-y-4",
                       data: {
                         "chat-composer-target": "form",
@@ -106,7 +94,7 @@
 
         <!-- Skip Button Form -->
         <div data-controller="skip-form" class="mt-2">
-          <%= form_with url: skip_conversation_path(@conversation),
+          <%= form_with url: skip_conversation_path(@conversation, debug: params[:debug]),
               data: {
                 "turbo-method": :post,
                 "skip-form-target": "form",
