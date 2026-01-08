@@ -218,6 +218,5 @@ module Interview
         end
       end.new
     end
-
   end
 end
