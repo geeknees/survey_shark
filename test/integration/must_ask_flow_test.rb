@@ -6,6 +6,8 @@ class MustAskFlowTest < ActionDispatch::IntegrationTest
   include ActiveJob::TestHelper
 
   test "delivers must_ask question after deepening via job" do
+    original_key = ENV["OPENAI_API_KEY"]
+    ENV["OPENAI_API_KEY"] = ""
     conversation = conversations(:one)
     project = conversation.project
 
@@ -22,5 +24,7 @@ class MustAskFlowTest < ActionDispatch::IntegrationTest
     assistant_message = conversation.messages.assistant.last
     assert_equal "must_ask", conversation.reload.state
     assert_includes assistant_message.content, "年齢"
+  ensure
+    ENV["OPENAI_API_KEY"] = original_key
   end
 end

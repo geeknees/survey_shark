@@ -61,30 +61,9 @@ module Interview
         meta: updated_meta.merge("deepening_turn_count" => updated_deepening_turn_count)
       )
 
-      if next_state == "must_ask"
-        must_ask_question = Interview::MustAskManager.new(@project, @conversation.meta).question
-        debug_meta = debug_enabled? ? build_debug_meta(next_state, updated_deepening_turn_count) : {}
-        @conversation.messages.create!(
-          role: 1, # assistant
-          content: must_ask_question,
-          meta: debug_meta
-        )
-        @broadcast_manager.broadcast_final_update
-        return must_ask_question
-      end
-
       messages = build_conversation_history
       system_prompt = @prompt_builder.system_prompt
-      behavior_prompt = @prompt_builder.behavior_prompt_for_state(next_state, updated_deepening_turn_count)
-
-      # Handle special prompts that need interpolation
-      if next_state == "summary_check"
-        summary = generate_conversation_summary
-        behavior_prompt = behavior_prompt.gsub("{summary}", summary)
-      elsif next_state == "recommend"
-        most_important = identify_most_important_pain_point
-        behavior_prompt = behavior_prompt.gsub("{most_important}", most_important)
-      end
+      behavior_prompt = build_behavior_prompt(next_state, updated_deepening_turn_count)
 
       # Prepare streaming
       accumulated_content = ""
@@ -219,6 +198,10 @@ module Interview
 
     def test_llm_client
       Class.new do
+        def initialize
+          @call_count = 0
+        end
+
         def stream_chat(messages:, **opts, &block)
           # Check if we should simulate an error for testing
           if ENV["SIMULATE_LLM_ERROR"] == "true"
@@ -226,7 +209,7 @@ module Interview
           end
 
           # Return a mock response for tests
-          response = "Test response from assistant"
+          response = build_response(messages)
 
           if block_given?
             # Simulate streaming by yielding chunks
@@ -239,7 +222,41 @@ module Interview
 
           response
         end
+
+        private
+
+        def build_response(messages)
+          behavior_prompt = messages.reverse.find { |msg| msg[:role] == "system" }&.dig(:content).to_s
+          must_ask_match = behavior_prompt.match(/必ず聞く項目:\s*(.+)/)
+          return "次に、「#{must_ask_match[1]}」について教えてください。" if must_ask_match
+
+          @call_count += 1
+          "Test response from assistant #{@call_count}"
+        end
       end.new
+    end
+
+    def build_behavior_prompt(state, deepening_turn_count)
+      case state
+      when "summary_check"
+        summary = generate_conversation_summary
+        @prompt_builder.behavior_prompt_for_state(state, deepening_turn_count)
+                      .gsub("{summary}", summary)
+      when "recommend"
+        most_important = identify_most_important_pain_point
+        @prompt_builder.behavior_prompt_for_state(state, deepening_turn_count)
+                      .gsub("{most_important}", most_important)
+      when "must_ask"
+        must_ask_manager = Interview::MustAskManager.new(@project, @conversation.meta)
+        @prompt_builder.behavior_prompt_for_state(
+          state,
+          deepening_turn_count,
+          must_ask_item: must_ask_manager.current_item,
+          must_ask_followup: must_ask_manager.followup?
+        )
+      else
+        @prompt_builder.behavior_prompt_for_state(state, deepening_turn_count)
+      end
     end
   end
 end

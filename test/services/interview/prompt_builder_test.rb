@@ -1,3 +1,5 @@
+# ABOUTME: Tests prompt builder system and behavior prompts across states.
+# ABOUTME: Validates must-ask and summary interpolations for LLM guidance.
 require "test_helper"
 require_relative "../../../app/services/interview"
 require_relative "../../../app/services/interview/prompt_builder"
@@ -45,6 +47,18 @@ class Interview::PromptBuilderTest < ActiveSupport::TestCase
         assert_includes prompt, keyword, "State #{state} should include keyword #{keyword}"
       end
     end
+  end
+
+  test "generates must_ask prompt with item and followup hint" do
+    prompt = @prompt_builder.behavior_prompt_for_state(
+      "must_ask",
+      0,
+      must_ask_item: "年齢",
+      must_ask_followup: true
+    )
+
+    assert_includes prompt, "必ず聞く項目: 年齢"
+    assert_includes prompt, "追質問"
   end
 
   test "handles different tone settings" do

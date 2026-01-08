@@ -1,5 +1,5 @@
 # ABOUTME: Generates assistant responses based on state and conversation context.
-# ABOUTME: Adds must-ask sequencing with deterministic follow-up prompts.
+# ABOUTME: Guides LLM responses for must-ask sequencing and follow-ups.
 module Interview
   # Generates AI assistant responses based on conversation state and context
   class ResponseGenerator
@@ -12,61 +12,42 @@ module Interview
 
     # Generate assistant response for the given state
     def generate_response(state, user_message, deepening_turn_count = 0)
-      # For structured states, use predefined questions directly without LLM
-      # This ensures consistent, appropriate questions at each stage
-      case state
-      when "intro", "enumerate", "choose", "deepening", "must_ask"
-        generate_structured_response(state, deepening_turn_count)
-      when "summary_check"
-        # Use LLM to generate a natural summary
-        summary = generate_conversation_summary
-        behavior_prompt = @prompt_builder.behavior_prompt_for_state(state, deepening_turn_count)
-        behavior_prompt.gsub("{summary}", summary).split("\n\n").last
-      when "recommend"
-        # Use LLM to identify and recommend the most important pain point
-        messages = build_conversation_history
-        system_prompt = @prompt_builder.system_prompt
-        most_important = identify_most_important_pain_point
-        behavior_prompt = @prompt_builder.behavior_prompt_for_state(state, deepening_turn_count)
-        behavior_prompt = behavior_prompt.gsub("{most_important}", most_important)
+      messages = build_conversation_history
+      system_prompt = @prompt_builder.system_prompt
+      behavior_prompt = build_behavior_prompt(state, deepening_turn_count)
 
-        @llm_client.generate_response(
-          system_prompt: system_prompt,
-          behavior_prompt: behavior_prompt,
-          conversation_history: messages,
-          user_message: user_message.content
-        )
-      else
-        # For other states, use LLM
-        messages = build_conversation_history
-        system_prompt = @prompt_builder.system_prompt
-        behavior_prompt = @prompt_builder.behavior_prompt_for_state(state, deepening_turn_count)
-
-        @llm_client.generate_response(
-          system_prompt: system_prompt,
-          behavior_prompt: behavior_prompt,
-          conversation_history: messages,
-          user_message: user_message.content
-        )
-      end
+      @llm_client.generate_response(
+        system_prompt: system_prompt,
+        behavior_prompt: behavior_prompt,
+        conversation_history: messages,
+        user_message: user_message.content
+      )
     end
 
     private
 
-    def generate_structured_response(state, deepening_turn_count)
-      return must_ask_question if state == "must_ask"
-
-      # Return the predefined question directly
-      behavior_prompt = @prompt_builder.behavior_prompt_for_state(state, deepening_turn_count)
-      # Extract just the question part (after the directive)
-      behavior_prompt.split("\n\n").last
+    def build_behavior_prompt(state, deepening_turn_count)
+      case state
+      when "summary_check"
+        summary = generate_conversation_summary
+        @prompt_builder.behavior_prompt_for_state(state, deepening_turn_count)
+                      .gsub("{summary}", summary)
+      when "recommend"
+        most_important = identify_most_important_pain_point
+        @prompt_builder.behavior_prompt_for_state(state, deepening_turn_count)
+                      .gsub("{most_important}", most_important)
+      when "must_ask"
+        must_ask_manager = Interview::MustAskManager.new(@project, @conversation.meta)
+        @prompt_builder.behavior_prompt_for_state(
+          state,
+          deepening_turn_count,
+          must_ask_item: must_ask_manager.current_item,
+          must_ask_followup: must_ask_manager.followup?
+        )
+      else
+        @prompt_builder.behavior_prompt_for_state(state, deepening_turn_count)
+      end
     end
-
-    def must_ask_question
-      must_ask_manager = Interview::MustAskManager.new(@project, @conversation.meta)
-      must_ask_manager.question
-    end
-
     def build_conversation_history
       @conversation.messages.order(:created_at).map do |message|
         {

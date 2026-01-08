@@ -92,7 +92,8 @@ class Interview::OrchestratorTest < ActiveSupport::TestCase
   test "moves to must_ask after deepening before summary_check" do
     @project.update!(must_ask: [ "年齢", "居住地" ], limits: @project.limits.merge("max_deep" => 1))
     @conversation.update!(state: "deepening", meta: { "deepening_turn_count" => 1 })
-    @orchestrator = Interview::Orchestrator.new(@conversation, llm_client: @fake_client)
+    must_ask_client = LLM::Client::Fake.new(responses: [ "次に、「年齢」について教えてください。" ])
+    @orchestrator = Interview::Orchestrator.new(@conversation, llm_client: must_ask_client)
 
     user_message = @conversation.messages.create!(role: :user, content: "More details")
     response = @orchestrator.process_user_message(user_message)
@@ -104,7 +105,8 @@ class Interview::OrchestratorTest < ActiveSupport::TestCase
   test "asks a follow-up when must_ask answer is unclear" do
     @project.update!(must_ask: [ "年齢" ])
     @conversation.update!(state: "must_ask", meta: { "must_ask_index" => 0, "must_ask_followup" => false })
-    @orchestrator = Interview::Orchestrator.new(@conversation, llm_client: @fake_client)
+    followup_client = LLM::Client::Fake.new(responses: [ "先ほどの「年齢」について、もう少し詳しく教えていただけますか？" ])
+    @orchestrator = Interview::Orchestrator.new(@conversation, llm_client: followup_client)
 
     user_message = @conversation.messages.create!(role: :user, content: "わからない")
     response = @orchestrator.process_user_message(user_message)
@@ -116,7 +118,8 @@ class Interview::OrchestratorTest < ActiveSupport::TestCase
   test "advances to summary_check after the last must_ask item" do
     @project.update!(must_ask: [ "年齢" ])
     @conversation.update!(state: "must_ask", meta: { "must_ask_index" => 0 })
-    @orchestrator = Interview::Orchestrator.new(@conversation, llm_client: @fake_client)
+    must_ask_client = LLM::Client::Fake.new(responses: [ "次に、「年齢」について教えてください。" ])
+    @orchestrator = Interview::Orchestrator.new(@conversation, llm_client: must_ask_client)
 
     user_message = @conversation.messages.create!(role: :user, content: "30歳です")
     @orchestrator.process_user_message(user_message)
@@ -130,7 +133,8 @@ class Interview::OrchestratorTest < ActiveSupport::TestCase
       limits: @project.limits.merge("max_deep" => 1, "max_turns" => 1)
     )
     @conversation.update!(state: "deepening", meta: { "deepening_turn_count" => 1 })
-    @orchestrator = Interview::Orchestrator.new(@conversation, llm_client: @fake_client)
+    must_ask_client = LLM::Client::Fake.new(responses: [ "次に、「年齢」について教えてください。" ])
+    @orchestrator = Interview::Orchestrator.new(@conversation, llm_client: must_ask_client)
 
     user_message = @conversation.messages.create!(role: :user, content: "More details")
     response = @orchestrator.process_user_message(user_message)

@@ -4,6 +4,8 @@ require "application_system_test_case"
 
 class MustAskFlowTest < ApplicationSystemTestCase
   test "asks must_ask after deepening on the conversation page" do
+    original_key = ENV["OPENAI_API_KEY"]
+    ENV["OPENAI_API_KEY"] = ""
     conversation = conversations(:one)
     project = conversation.project
 
@@ -21,5 +23,7 @@ class MustAskFlowTest < ApplicationSystemTestCase
     end
 
     wait_for_message("次に、「年齢」について教えてください。")
+  ensure
+    ENV["OPENAI_API_KEY"] = original_key
   end
 end
