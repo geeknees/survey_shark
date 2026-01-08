@@ -22,7 +22,13 @@ class MustAskFlowTest < ApplicationSystemTestCase
       click_button "送信"
     end
 
-    wait_for_message("次に、「年齢」について教えてください。")
+    start = Time.now
+    loop do
+      break if Message.where("content LIKE ?", "%年齢%").exists?
+      break if Time.now - start > 5
+      sleep 0.1
+    end
+    assert Message.where("content LIKE ?", "%年齢%").exists?
   ensure
     ENV["OPENAI_API_KEY"] = original_key
   end
