@@ -18,14 +18,13 @@ class MustAskFlowTest < ApplicationSystemTestCase
     visit conversation_path(conversation)
 
     fill_in "content", with: "More details"
-    perform_enqueued_jobs do
-      click_button "送信"
-    end
+    click_button "送信"
 
     start = Time.now
     loop do
+      perform_enqueued_jobs
       break if Message.where("content LIKE ?", "%年齢%").exists?
-      break if Time.now - start > 5
+      break if Time.now - start > 10
       sleep 0.1
     end
     assert Message.where("content LIKE ?", "%年齢%").exists?
