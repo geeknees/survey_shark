@@ -2,14 +2,15 @@
 # ABOUTME: Provides deterministic must-ask question text and clarity checks.
 module Interview
   class MustAskManager
+    MAX_FOLLOWUPS = 3
     UNCLEAR_PATTERNS = [
-      "わからない",
-      "分からない",
-      "覚えてない",
-      "覚えていない",
-      "不明",
-      "特にない",
-      "ない"
+      /\Aわからない\z/,
+      /\A分からない\z/,
+      /\A覚えてない\z/,
+      /\A覚えていない\z/,
+      /\A不明\z/,
+      /\A特にない\z/,
+      /\Aない\z/
     ].freeze
 
     def initialize(project, meta)
@@ -35,11 +36,20 @@ module Interview
       next_meta = @meta.dup
       next_meta["must_ask_index"] = 0 unless next_meta.key?("must_ask_index")
       next_meta["must_ask_followup"] = false
+      next_meta["must_ask_followup_count"] = 0
       next_meta
     end
 
     def advance_meta_for_answer(content)
-      return @meta.merge("must_ask_followup" => true) if unclear_answer?(content)
+      if unclear_answer?(content)
+        followup_count = followup_count_after_answer
+        return advance_after_followup_limit if followup_count >= MAX_FOLLOWUPS
+
+        return @meta.merge(
+          "must_ask_followup" => true,
+          "must_ask_followup_count" => followup_count
+        )
+      end
 
       next_index = current_index + 1
       @meta.merge(
@@ -49,7 +59,9 @@ module Interview
     end
 
     def next_state_after_answer(content)
-      return "must_ask" if unclear_answer?(content)
+      if unclear_answer?(content)
+        return "must_ask" if followup_count_after_answer < MAX_FOLLOWUPS
+      end
 
       next_index = current_index + 1
       next_index < must_ask_items.length ? "must_ask" : "summary_check"
@@ -70,7 +82,7 @@ module Interview
       return true if text.empty?
       return true if text.length <= 1
 
-      UNCLEAR_PATTERNS.any? { |pattern| text.include?(pattern) }
+      UNCLEAR_PATTERNS.any? { |pattern| pattern.match?(text) }
     end
 
     private
@@ -81,6 +93,19 @@ module Interview
 
     def current_index
       @meta["must_ask_index"].to_i
+    end
+
+    def followup_count_after_answer
+      @meta.fetch("must_ask_followup_count", 0).to_i + 1
+    end
+
+    def advance_after_followup_limit
+      next_index = current_index + 1
+      @meta.merge(
+        "must_ask_index" => next_index,
+        "must_ask_followup" => false,
+        "must_ask_followup_count" => 0
+      )
     end
   end
 end

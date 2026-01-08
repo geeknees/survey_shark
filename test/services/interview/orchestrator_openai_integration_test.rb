@@ -23,11 +23,7 @@ class Interview::OrchestratorOpenAIIntegrationTest < ActiveSupport::TestCase
   end
 
   test "switches to fallback mode on OpenAI error" do
-    # Skip this test as most states now use predefined questions
-    # and don't call OpenAI, making this test less relevant.
-    # OpenAI errors are now less likely since we only use OpenAI
-    # for recommend state and optional states.
-    skip "Most states use predefined questions and don't trigger OpenAI errors"
+    skip "OpenAI error handling is covered by client tests"
   end
 
   test "continues with fallback orchestrator once in fallback mode" do
@@ -68,7 +64,7 @@ class Interview::OrchestratorOpenAIIntegrationTest < ActiveSupport::TestCase
       response = orchestrator.process_user_message(user_message)
 
       assert_equal "LLM response for production", response
-      assert_equal "enumerate", @conversation.reload.state
+      assert_equal "deepening", @conversation.reload.state
     ensure
       Rails.env = original_env
       ENV.delete("OPENAI_API_KEY")
@@ -95,7 +91,7 @@ class Interview::OrchestratorOpenAIIntegrationTest < ActiveSupport::TestCase
     response = orchestrator.process_user_message(user_message)
 
     assert_equal "Success after timeout retry", response
-    assert_equal "enumerate", @conversation.reload.state
+    assert_equal "deepening", @conversation.reload.state
   ensure
     ENV.delete("OPENAI_API_KEY")
   end

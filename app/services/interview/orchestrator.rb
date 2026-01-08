@@ -2,7 +2,7 @@
 # ABOUTME: Ensures must-ask items are asked before summary and after deepening.
 module Interview
   class Orchestrator
-    STATES = %w[intro enumerate recommend choose deepening must_ask summary_check done].freeze
+    STATES = %w[intro deepening must_ask summary_check done].freeze
 
     def initialize(conversation, llm_client: nil)
       @conversation = conversation

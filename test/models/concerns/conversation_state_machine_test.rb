@@ -1,3 +1,5 @@
+# ABOUTME: Tests conversation state machine helpers for active/finished states.
+# ABOUTME: Covers fallback and turn limit behavior across valid states.
 require "test_helper"
 
 class ConversationStateMachineTest < ActiveSupport::TestCase
@@ -10,7 +12,7 @@ class ConversationStateMachineTest < ActiveSupport::TestCase
     @conversation.update!(state: "intro")
     assert @conversation.in_state?("intro")
     assert @conversation.in_state?(:intro)
-    assert_not @conversation.in_state?("enumerate")
+    assert_not @conversation.in_state?("deepening")
   end
 
   test "finished? returns true when conversation has finished_at set" do
@@ -24,7 +26,7 @@ class ConversationStateMachineTest < ActiveSupport::TestCase
   end
 
   test "active? returns true for active conversations" do
-    @conversation.update!(state: "enumerate", finished_at: nil)
+    @conversation.update!(state: "deepening", finished_at: nil)
     assert @conversation.active?
   end
 
@@ -44,7 +46,7 @@ class ConversationStateMachineTest < ActiveSupport::TestCase
   end
 
   test "can_accept_messages? returns true when active and not at turn limit" do
-    @conversation.update!(state: "enumerate", finished_at: nil)
+    @conversation.update!(state: "deepening", finished_at: nil)
     assert @conversation.can_accept_messages?
   end
 

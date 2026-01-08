@@ -8,7 +8,8 @@ module Interview
 
     def system_prompt
       tone = @project.tone || "polite_soft"
-      max_deep = @project.limits.dig("max_deep") || 5
+      limits = @project.limits.is_a?(Hash) ? @project.limits : {}
+      max_deep = limits["max_deep"] || limits[:max_deep] || 5
 
       <<~PROMPT
         あなたは優しく丁寧なインタビュアーです。以下のルールに従って会話を進めてください：
@@ -20,15 +21,12 @@ module Interview
         - 質問は簡潔で分かりやすくしてください
 
         ## インタビューの流れ
-        1. 列挙フェーズ: 日常の課題や不便を3つまで挙げてもらう
-        2. 推奨フェーズ: 挙げられた中から最も重要なものを推奨する
-        3. 選択フェーズ: ユーザーに最重要な1つを選んでもらう
-        4. 深掘りフェーズ: 選択された課題について#{max_deep}回程度、多角的に詳しく聞く
+        1. 深掘りフェーズ: 日常の課題や不便について#{max_deep}回程度、多角的に詳しく聞く
            - 具体的な場面や状況
            - 発生頻度や影響の大きさ
            - 過去の対処方法や試したこと
            - 理想の解決策や期待すること
-        5. 要約確認フェーズ: 会話内容を要約し、確認を求める
+        2. 要約確認フェーズ: 会話内容を要約し、確認を求める
 
         ## 制約事項
         #{must_ask_constraints}
@@ -47,21 +45,6 @@ module Interview
           直前のユーザー回答を踏まえ、日常生活で感じている課題や不便なことを最大3つ挙げてもらうための質問を1つ作成してください。
           口調は丁寧で共感的にし、質問は簡潔にしてください。
           #{initial_hint}
-        PROMPT
-      when "enumerate"
-        <<~PROMPT
-          直前のユーザー回答を踏まえ、他にも課題や不便があるかを確認する質問を1つ作成してください（最大3つまで）。
-          口調は丁寧で、相手が続けやすい聞き方にしてください。
-        PROMPT
-      when "recommend"
-        <<~PROMPT
-          直前のユーザー回答と会話履歴を踏まえ、最も重要と思われる課題について同意を求める質問を1つ作成してください。
-          重要だと思われる課題: {most_important}
-        PROMPT
-      when "choose"
-        <<~PROMPT
-          これまでに挙げられた課題の中から、最も重要だと思うものを1つ選んでもらう質問を1つ作成してください。
-          直前のユーザー回答に沿って、短く明確に聞いてください。
         PROMPT
       when "deepening"
         <<~PROMPT

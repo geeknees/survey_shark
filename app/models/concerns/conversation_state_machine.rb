@@ -5,7 +5,7 @@ module ConversationStateMachine
 
   included do
     # State constants
-    VALID_STATES = %w[intro enumerate recommend choose deepening must_ask summary_check done fallback].freeze
+    VALID_STATES = %w[intro deepening must_ask summary_check done fallback].freeze
   end
 
   # Check if conversation is in a specific state

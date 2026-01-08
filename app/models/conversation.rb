@@ -9,5 +9,5 @@ class Conversation < ApplicationRecord
   has_many :messages, dependent: :destroy
   has_many :insight_cards, dependent: :destroy
 
-  validates :state, inclusion: { in: %w[intro enumerate recommend choose deepening must_ask summary_check done fallback] }
+  validates :state, inclusion: { in: %w[intro deepening must_ask summary_check done fallback] }
 end

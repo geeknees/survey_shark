@@ -28,40 +28,9 @@ class Interview::OrchestratorTest < ActiveSupport::TestCase
     assert assistant_message.content.present?
   end
 
-  test "transitions from intro to enumerate state" do
+  test "transitions from intro to deepening state" do
     @conversation.update!(state: "intro")
     user_message = @conversation.messages.create!(role: :user, content: "Hello")
-
-    @orchestrator.process_user_message(user_message)
-
-    assert_equal "enumerate", @conversation.reload.state
-  end
-
-  test "transitions from enumerate to recommend after multiple pain points" do
-    @conversation.update!(state: "enumerate")
-
-    # Add multiple user messages to simulate pain points
-    @conversation.messages.create!(role: :user, content: "Problem 1")
-    @conversation.messages.create!(role: :user, content: "Problem 2")
-    user_message = @conversation.messages.create!(role: :user, content: "Problem 3")
-
-    @orchestrator.process_user_message(user_message)
-
-    assert_equal "recommend", @conversation.reload.state
-  end
-
-  test "transitions from recommend to choose" do
-    @conversation.update!(state: "recommend")
-    user_message = @conversation.messages.create!(role: :user, content: "Yes, that sounds right")
-
-    @orchestrator.process_user_message(user_message)
-
-    assert_equal "choose", @conversation.reload.state
-  end
-
-  test "transitions from choose to deepening" do
-    @conversation.update!(state: "choose")
-    user_message = @conversation.messages.create!(role: :user, content: "I choose the first problem")
 
     @orchestrator.process_user_message(user_message)
 
@@ -170,7 +139,7 @@ class Interview::OrchestratorTest < ActiveSupport::TestCase
   end
 
   test "handles skip messages" do
-    @conversation.update!(state: "enumerate")
+    @conversation.update!(state: "intro")
     user_message = @conversation.messages.create!(role: :user, content: "[スキップ]")
 
     assert_difference "Message.count", 1 do
@@ -178,17 +147,14 @@ class Interview::OrchestratorTest < ActiveSupport::TestCase
     end
 
     # Should still progress to next state
-    assert_equal "recommend", @conversation.reload.state
+    assert_equal "deepening", @conversation.reload.state
   end
 
   test "generates appropriate responses for different states" do
     states_and_expected_keywords = {
       "intro" => [ "課題", "不便" ],
-      "enumerate" => [ "他に", "課題" ],
-      "recommend" => [ "重要" ],
-      "choose" => [ "選んで" ],
       "deepening" => [ "詳しく" ],
-      "summary_check" => [ "まとめ", "確認" ]
+      "summary_check" => [ "要約", "確認" ]
     }
 
     states_and_expected_keywords.each do |state, keywords|

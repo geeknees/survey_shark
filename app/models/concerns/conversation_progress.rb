@@ -49,12 +49,6 @@ module ConversationProgress
     case state
     when "intro"
       "開始"
-    when "enumerate"
-      "課題の列挙"
-    when "recommend"
-      "推奨"
-    when "choose"
-      "選択"
     when "deepening"
       "深掘り"
     when "must_ask"

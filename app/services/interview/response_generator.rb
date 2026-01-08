@@ -32,10 +32,6 @@ module Interview
         summary = generate_conversation_summary
         @prompt_builder.behavior_prompt_for_state(state, deepening_turn_count)
                       .gsub("{summary}", summary)
-      when "recommend"
-        most_important = identify_most_important_pain_point
-        @prompt_builder.behavior_prompt_for_state(state, deepening_turn_count)
-                      .gsub("{most_important}", most_important)
       when "must_ask"
         must_ask_manager = Interview::MustAskManager.new(@project, @conversation.meta)
         @prompt_builder.behavior_prompt_for_state(
@@ -57,12 +53,6 @@ module Interview
       end
     end
 
-    def identify_most_important_pain_point
-      # Simple heuristic - in real implementation this would use LLM analysis
-      pain_points = extract_pain_points_from_conversation
-      pain_points.first || "お話しいただいた課題"
-    end
-
     def generate_conversation_summary
       user_messages = @conversation.messages.where(role: 0)
                                           .where.not(content: "[スキップ]")
@@ -76,17 +66,5 @@ module Interview
       end
     end
 
-    def extract_pain_points_from_conversation
-      # Simple extraction - in real implementation this would be more sophisticated
-      user_messages = @conversation.messages.where(role: 0).pluck(:content)
-      # Exclude system messages, skip messages, and completion indicators
-      completion_patterns = [ "以上", "それだけ", "終わり", "ない", "特にない" ]
-      user_messages.reject { |msg|
-        msg == "[スキップ]" ||
-        msg == "[インタビュー開始]" ||
-        msg.strip.empty? ||
-        completion_patterns.any? { |pattern| msg.include?(pattern) && msg.length < 10 }
-      }
-    end
   end
 end

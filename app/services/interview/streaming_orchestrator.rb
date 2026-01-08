@@ -174,16 +174,6 @@ module Interview
       messages
     end
 
-    def identify_most_important_pain_point
-      pain_points = extract_pain_points_from_conversation
-      pain_points.first || "お話しいただいた課題"
-    end
-
-    def extract_pain_points_from_conversation
-      user_messages = @conversation.messages.where(role: 0).pluck(:content)
-      user_messages.reject { |msg| msg == "[スキップ]" || msg == "[インタビュー開始]" }
-    end
-
     def generate_conversation_summary
       user_messages = @conversation.messages.where(role: 0)
                                           .where.not(content: "[スキップ]")
@@ -242,10 +232,6 @@ module Interview
         summary = generate_conversation_summary
         @prompt_builder.behavior_prompt_for_state(state, deepening_turn_count)
                       .gsub("{summary}", summary)
-      when "recommend"
-        most_important = identify_most_important_pain_point
-        @prompt_builder.behavior_prompt_for_state(state, deepening_turn_count)
-                      .gsub("{most_important}", most_important)
       when "must_ask"
         must_ask_manager = Interview::MustAskManager.new(@project, @conversation.meta)
         @prompt_builder.behavior_prompt_for_state(

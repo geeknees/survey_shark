@@ -32,12 +32,9 @@ class Interview::PromptBuilderTest < ActiveSupport::TestCase
 
   test "generates appropriate behavior prompts for each state" do
     states_and_keywords = {
-      "intro" => [ "課題", "不便", "3つまで" ],
-      "enumerate" => [ "他に", "課題" ],
-      "recommend" => [ "重要" ],
-      "choose" => [ "選んで" ],
+      "intro" => [ "課題", "不便", "3つ" ],
       "deepening" => [ "詳しく" ],
-      "summary_check" => [ "まとめ", "確認" ]
+      "summary_check" => [ "要約", "確認" ]
     }
 
     states_and_keywords.each do |state, keywords|
@@ -88,9 +85,4 @@ class Interview::PromptBuilderTest < ActiveSupport::TestCase
     assert_includes prompt, "{summary}"
   end
 
-  test "interpolates most_important in recommend prompt" do
-    prompt = @prompt_builder.behavior_prompt_for_state("recommend")
-
-    assert_includes prompt, "{most_important}"
-  end
 end
