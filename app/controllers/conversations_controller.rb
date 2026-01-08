@@ -1,3 +1,5 @@
+# ABOUTME: Handles conversation view and message creation endpoints.
+# ABOUTME: Enforces turn limits while allowing final summary confirmation.
 class ConversationsController < ApplicationController
   allow_unauthenticated_access
   before_action :set_conversation
@@ -29,7 +31,7 @@ class ConversationsController < ApplicationController
     user_turn_count = @conversation.messages.where(role: 0).count.to_i
     max_turns = (@conversation.project.limits.dig("max_turns") || 12).to_i
 
-    if user_turn_count >= max_turns
+    if user_turn_count >= max_turns && !@conversation.allow_over_turn_limit?
       # Mark conversation as finished if turn limit reached
       @conversation.update!(finished_at: Time.current) unless @conversation.finished_at.present?
       return redirect_to @conversation
@@ -62,7 +64,7 @@ class ConversationsController < ApplicationController
     user_turn_count = @conversation.messages.where(role: 0).count.to_i
     max_turns = (@conversation.project.limits.dig("max_turns") || 12).to_i
 
-    if user_turn_count >= max_turns
+    if user_turn_count >= max_turns && !@conversation.allow_over_turn_limit?
       # Mark conversation as finished if turn limit reached
       @conversation.update!(finished_at: Time.current) unless @conversation.finished_at.present?
       return redirect_to @conversation

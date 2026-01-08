@@ -27,7 +27,7 @@ module Interview
       begin
         # Check turn limit before processing
         must_ask_manager = Interview::MustAskManager.new(@project, @conversation.meta)
-        if @state_machine.turn_limit_reached? && !must_ask_manager.pending?
+        if @state_machine.turn_limit_reached? && !must_ask_manager.pending? && !@conversation.in_state?("summary_check")
           return handle_turn_limit_reached
         end
 

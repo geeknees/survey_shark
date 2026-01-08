@@ -69,4 +69,8 @@ module ConversationProgress
   def must_ask_pending?
     Interview::MustAskManager.new(project, meta).pending?
   end
+
+  def allow_over_turn_limit?
+    must_ask_pending? || in_state?("summary_check")
+  end
 end

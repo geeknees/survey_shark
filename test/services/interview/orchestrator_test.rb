@@ -156,6 +156,19 @@ class Interview::OrchestratorTest < ActiveSupport::TestCase
     assert_not_nil @conversation.reload.finished_at
   end
 
+  test "allows summary_check response even when turn limit reached" do
+    @project.update!(limits: @project.limits.merge("max_turns" => 0))
+    @conversation.update!(state: "summary_check")
+    done_client = LLM::Client::Fake.new(responses: [ "完了メッセージ" ])
+    @orchestrator = Interview::Orchestrator.new(@conversation, llm_client: done_client)
+
+    user_message = @conversation.messages.create!(role: :user, content: "はい")
+    @orchestrator.process_user_message(user_message)
+
+    assert_equal "done", @conversation.reload.state
+    assert_not_nil @conversation.reload.finished_at
+  end
+
   test "handles skip messages" do
     @conversation.update!(state: "enumerate")
     user_message = @conversation.messages.create!(role: :user, content: "[スキップ]")

@@ -17,7 +17,7 @@ module Interview
       max_turns = (@project.limits.dig("max_turns") || 12).to_i
 
       must_ask_manager = Interview::MustAskManager.new(@project, @conversation.meta)
-      if user_turn_count >= max_turns && !must_ask_manager.pending?
+      if user_turn_count >= max_turns && !must_ask_manager.pending? && !@conversation.in_state?("summary_check")
         # Mark conversation as finished if turn limit reached
         @conversation.update!(finished_at: Time.current) unless @conversation.finished_at.present?
 

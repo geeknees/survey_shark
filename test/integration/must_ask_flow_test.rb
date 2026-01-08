@@ -27,4 +27,23 @@ class MustAskFlowTest < ActionDispatch::IntegrationTest
   ensure
     ENV["OPENAI_API_KEY"] = original_key
   end
+
+  test "allows final summary response even when at turn limit" do
+    original_key = ENV["OPENAI_API_KEY"]
+    ENV["OPENAI_API_KEY"] = ""
+    conversation = conversations(:one)
+    project = conversation.project
+
+    project.update!(limits: project.limits.merge("max_turns" => 0))
+    conversation.update!(state: "summary_check")
+
+    perform_enqueued_jobs do
+      post create_message_conversation_path(conversation), params: { content: "はい、合っています" }
+    end
+
+    assert_equal "done", conversation.reload.state
+    assert conversation.finished_at.present?
+  ensure
+    ENV["OPENAI_API_KEY"] = original_key
+  end
 end
