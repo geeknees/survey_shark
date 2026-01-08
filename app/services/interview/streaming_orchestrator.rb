@@ -1,3 +1,5 @@
+# ABOUTME: Streams assistant responses and updates conversation state in real time.
+# ABOUTME: Adds must-ask handling to streaming flow and turn limit checks.
 module Interview
   class StreamingOrchestrator
     def initialize(conversation, llm_client: nil)
@@ -14,7 +16,8 @@ module Interview
       user_turn_count = @conversation.messages.where(role: 0).count.to_i
       max_turns = (@project.limits.dig("max_turns") || 12).to_i
 
-      if user_turn_count >= max_turns
+      must_ask_manager = Interview::MustAskManager.new(@project, @conversation.meta)
+      if user_turn_count >= max_turns && !must_ask_manager.pending?
         # Mark conversation as finished if turn limit reached
         @conversation.update!(finished_at: Time.current) unless @conversation.finished_at.present?
 
@@ -41,6 +44,13 @@ module Interview
       current_deepening_turn_count = persisted_deepening_turn_count
       next_state = @state_machine.determine_next_state(user_message, current_deepening_turn_count)
 
+      updated_meta = @conversation.meta || {}
+      if old_state == "must_ask"
+        updated_meta = must_ask_manager.advance_meta_for_answer(user_message.content)
+      elsif next_state == "must_ask"
+        updated_meta = must_ask_manager.start_meta
+      end
+
       updated_deepening_turn_count = current_deepening_turn_count
       if next_state == "deepening"
         updated_deepening_turn_count = (old_state == "deepening") ? current_deepening_turn_count + 1 : 1
@@ -48,10 +58,21 @@ module Interview
 
       @conversation.update!(
         state: next_state,
-        meta: @conversation.meta.merge("deepening_turn_count" => updated_deepening_turn_count)
+        meta: updated_meta.merge("deepening_turn_count" => updated_deepening_turn_count)
       )
 
-      # Build messages for LLM
+      if next_state == "must_ask"
+        must_ask_question = Interview::MustAskManager.new(@project, @conversation.meta).question
+        debug_meta = debug_enabled? ? build_debug_meta(next_state, updated_deepening_turn_count) : {}
+        @conversation.messages.create!(
+          role: 1, # assistant
+          content: must_ask_question,
+          meta: debug_meta
+        )
+        @broadcast_manager.broadcast_final_update
+        return must_ask_question
+      end
+
       messages = build_conversation_history
       system_prompt = @prompt_builder.system_prompt
       behavior_prompt = @prompt_builder.behavior_prompt_for_state(next_state, updated_deepening_turn_count)

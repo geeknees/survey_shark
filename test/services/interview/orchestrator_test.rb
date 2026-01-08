@@ -1,3 +1,5 @@
+# ABOUTME: Tests interview orchestrator behavior across states and edge cases.
+# ABOUTME: Covers must-ask sequencing, turn limits, and response generation.
 require "test_helper"
 require_relative "../../../app/services/interview"
 require_relative "../../../app/services/interview/orchestrator"
@@ -85,6 +87,57 @@ class Interview::OrchestratorTest < ActiveSupport::TestCase
     @orchestrator.process_user_message(user_message2)
 
     assert_equal "summary_check", @conversation.reload.state
+  end
+
+  test "moves to must_ask after deepening before summary_check" do
+    @project.update!(must_ask: [ "年齢", "居住地" ], limits: @project.limits.merge("max_deep" => 1))
+    @conversation.update!(state: "deepening", meta: { "deepening_turn_count" => 1 })
+    @orchestrator = Interview::Orchestrator.new(@conversation, llm_client: @fake_client)
+
+    user_message = @conversation.messages.create!(role: :user, content: "More details")
+    response = @orchestrator.process_user_message(user_message)
+
+    assert_equal "must_ask", @conversation.reload.state
+    assert_includes response, "年齢"
+  end
+
+  test "asks a follow-up when must_ask answer is unclear" do
+    @project.update!(must_ask: [ "年齢" ])
+    @conversation.update!(state: "must_ask", meta: { "must_ask_index" => 0, "must_ask_followup" => false })
+    @orchestrator = Interview::Orchestrator.new(@conversation, llm_client: @fake_client)
+
+    user_message = @conversation.messages.create!(role: :user, content: "わからない")
+    response = @orchestrator.process_user_message(user_message)
+
+    assert_equal "must_ask", @conversation.reload.state
+    assert_includes response, "もう少し詳しく"
+  end
+
+  test "advances to summary_check after the last must_ask item" do
+    @project.update!(must_ask: [ "年齢" ])
+    @conversation.update!(state: "must_ask", meta: { "must_ask_index" => 0 })
+    @orchestrator = Interview::Orchestrator.new(@conversation, llm_client: @fake_client)
+
+    user_message = @conversation.messages.create!(role: :user, content: "30歳です")
+    @orchestrator.process_user_message(user_message)
+
+    assert_equal "summary_check", @conversation.reload.state
+  end
+
+  test "prioritizes must_ask over turn limit" do
+    @project.update!(
+      must_ask: [ "年齢" ],
+      limits: @project.limits.merge("max_deep" => 1, "max_turns" => 1)
+    )
+    @conversation.update!(state: "deepening", meta: { "deepening_turn_count" => 1 })
+    @orchestrator = Interview::Orchestrator.new(@conversation, llm_client: @fake_client)
+
+    user_message = @conversation.messages.create!(role: :user, content: "More details")
+    response = @orchestrator.process_user_message(user_message)
+
+    assert_equal "must_ask", @conversation.reload.state
+    assert_nil @conversation.finished_at
+    assert_includes response, "年齢"
   end
 
   test "transitions from summary_check to done and marks conversation finished" do

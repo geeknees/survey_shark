@@ -3,7 +3,7 @@
 module Interview
   # Manages conversation state transitions and determines next state based on user input
   class StateMachine
-    STATES = %w[intro enumerate recommend choose deepening summary_check done].freeze
+    STATES = %w[intro enumerate recommend choose deepening must_ask summary_check done].freeze
 
     def initialize(conversation, project)
       @conversation = conversation
@@ -28,6 +28,8 @@ module Interview
         "deepening"
       when "deepening"
         handle_deepening_state(deepening_turn_count, max_deep)
+      when "must_ask"
+        handle_must_ask_state(user_message)
       when "summary_check"
         "done"
       else
@@ -65,10 +67,18 @@ module Interview
 
     def handle_deepening_state(deepening_turn_count, max_deep)
       if deepening_turn_count >= max_deep
+        must_ask_manager = Interview::MustAskManager.new(@project, @conversation.meta)
+        return "must_ask" if must_ask_manager.pending?
+
         "summary_check"
       else
         "deepening"
       end
+    end
+
+    def handle_must_ask_state(user_message)
+      must_ask_manager = Interview::MustAskManager.new(@project, @conversation.meta)
+      must_ask_manager.next_state_after_answer(user_message.content)
     end
 
     def extract_pain_points_from_conversation

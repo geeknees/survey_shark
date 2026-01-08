@@ -1,9 +1,11 @@
+# ABOUTME: Provides state helpers for conversations and turn limit checks.
+# ABOUTME: Defines valid states and derived status helpers.
 module ConversationStateMachine
   extend ActiveSupport::Concern
 
   included do
     # State constants
-    VALID_STATES = %w[intro enumerate recommend choose deepening summary_check done fallback].freeze
+    VALID_STATES = %w[intro enumerate recommend choose deepening must_ask summary_check done fallback].freeze
   end
 
   # Check if conversation is in a specific state
