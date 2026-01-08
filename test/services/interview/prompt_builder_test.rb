@@ -84,5 +84,4 @@ class Interview::PromptBuilderTest < ActiveSupport::TestCase
 
     assert_includes prompt, "{summary}"
   end
-
 end

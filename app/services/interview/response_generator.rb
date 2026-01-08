@@ -65,6 +65,5 @@ module Interview
         "お話しいただいた内容"
       end
     end
-
   end
 end
