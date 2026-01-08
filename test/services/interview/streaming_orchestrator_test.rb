@@ -28,10 +28,10 @@ class Interview::StreamingOrchestratorTest < ActiveSupport::TestCase
   end
 
   test "persists deepening turn count across turns" do
-    @conversation.update!(state: "choose", meta: {})
+    @conversation.update!(state: "intro", meta: {})
     @project.update!(limits: @project.limits.merge("max_deep" => 1))
 
-    first = @conversation.messages.create!(role: :user, content: "I choose X")
+    first = @conversation.messages.create!(role: :user, content: "I have a problem")
     @orchestrator.process_user_message_with_streaming(first)
     assert_equal "deepening", @conversation.reload.state
     assert_equal 1, @conversation.meta["deepening_turn_count"].to_i

@@ -79,9 +79,6 @@ class ConversationProgressTest < ActiveSupport::TestCase
     @conversation.update!(state: "intro")
     assert_equal "開始", @conversation.progress_status
 
-    @conversation.update!(state: "enumerate")
-    assert_equal "課題の列挙", @conversation.progress_status
-
     @conversation.update!(state: "deepening")
     assert_equal "深掘り", @conversation.progress_status
 

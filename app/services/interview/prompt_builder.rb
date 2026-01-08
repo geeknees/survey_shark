@@ -1,3 +1,5 @@
+# ABOUTME: Builds system and behavior prompts for the interview LLM.
+# ABOUTME: Encodes project constraints, must-ask items, and phase guidance.
 module Interview
   class PromptBuilder
     def initialize(project)
@@ -6,7 +8,8 @@ module Interview
 
     def system_prompt
       tone = @project.tone || "polite_soft"
-      max_deep = @project.limits.dig("max_deep") || 5
+      limits = @project.limits.is_a?(Hash) ? @project.limits : {}
+      max_deep = limits["max_deep"] || limits[:max_deep] || 5
 
       <<~PROMPT
         あなたは優しく丁寧なインタビュアーです。以下のルールに従って会話を進めてください：
@@ -18,15 +21,12 @@ module Interview
         - 質問は簡潔で分かりやすくしてください
 
         ## インタビューの流れ
-        1. 列挙フェーズ: 日常の課題や不便を3つまで挙げてもらう
-        2. 推奨フェーズ: 挙げられた中から最も重要なものを推奨する
-        3. 選択フェーズ: ユーザーに最重要な1つを選んでもらう
-        4. 深掘りフェーズ: 選択された課題について#{max_deep}回程度、多角的に詳しく聞く
+        1. 深掘りフェーズ: 課題や不便について#{max_deep}回程度、多角的に詳しく聞く
            - 具体的な場面や状況
            - 発生頻度や影響の大きさ
            - 過去の対処方法や試したこと
            - 理想の解決策や期待すること
-        5. 要約確認フェーズ: 会話内容を要約し、確認を求める
+        2. 要約確認フェーズ: 会話内容を要約し、確認を求める
 
         ## 制約事項
         #{must_ask_constraints}
@@ -37,28 +37,53 @@ module Interview
       PROMPT
     end
 
-    def behavior_prompt_for_state(state, deepening_turn = 0)
-      question = case state
+    def behavior_prompt_for_state(state, deepening_turn = 0, must_ask_item: nil, must_ask_followup: false)
+      case state
       when "intro"
-        @project.initial_question.present? ?
-          @project.initial_question :
-          "まず、日常生活で感じている課題や不便なことを3つまで教えてください。どんな小さなことでも構いません。"
-      when "enumerate"
-        "他にも何か課題や不便に感じていることはありますか？（最大3つまで）"
-      when "recommend"
-        "お聞かせいただいた中で、特に重要だと思われるのは「{most_important}」のようですが、いかがでしょうか？"
-      when "choose"
-        "挙げていただいた課題の中から、最も重要だと思うものを1つ選んでいただけますか？"
+        initial_hint = @project.initial_question.present? ? "参考: #{@project.initial_question}" : ""
+        <<~PROMPT
+          感じている課題や不便なことを挙げてもらうための質問を1つ作成してください。
+          口調は丁寧で共感的にし、質問は簡潔にしてください。
+          #{initial_hint}
+        PROMPT
       when "deepening"
-        deepening_prompt(deepening_turn)
+        <<~PROMPT
+          直前のユーザー回答を踏まえ、次の観点で詳しく聞く質問を1つ作成してください。
+          観点: #{deepening_prompt(deepening_turn)}
+        PROMPT
+      when "must_ask"
+        followup_hint = must_ask_followup ? "追質問として、曖昧な点を具体化できるように" : "初回質問として"
+        <<~PROMPT
+          必ず聞く項目: #{must_ask_item}
+          直前のユーザー回答を踏まえ、#{followup_hint}この項目についての質問を1つ作成してください。
+        PROMPT
       when "summary_check"
-        "これまでのお話をまとめさせていただきます。内容に間違いがないか確認していただけますか？\n\n{summary}\n\nこの内容で間違いありませんか？"
+        <<~PROMPT
+          以下の要約をまとめとして提示し、内容の確認を求める質問を1つ作成してください。
+          {summary}
+        PROMPT
       else
-        "ありがとうございました。"
+        "会話を丁寧に締めくくる短い一文を作成してください。"
       end
+    end
 
-      # Return as a directive for the LLM to follow exactly
-      "次の質問を、そのままの文言で相手に尋ねてください（一切変更を加えず、そのまま出力してください）：\n\n#{question}"
+    def behavior_prompt_for_state_with_context(state, deepening_turn: 0, conversation: nil, meta: nil)
+      case state
+      when "summary_check"
+        summary = build_conversation_summary(conversation)
+        behavior_prompt_for_state(state, deepening_turn)
+          .gsub("{summary}", summary)
+      when "must_ask"
+        must_ask_manager = Interview::MustAskManager.new(@project, meta || conversation&.meta)
+        behavior_prompt_for_state(
+          state,
+          deepening_turn,
+          must_ask_item: must_ask_manager.current_item,
+          must_ask_followup: must_ask_manager.followup?
+        )
+      else
+        behavior_prompt_for_state(state, deepening_turn)
+      end
     end
 
     private
@@ -90,6 +115,21 @@ module Interview
         "カジュアルだが明快"
       else
         "丁寧"
+      end
+    end
+
+    def build_conversation_summary(conversation)
+      return "お話しいただいた内容" unless conversation
+
+      user_messages = conversation.messages.where(role: 0)
+                                           .where.not(content: "[スキップ]")
+                                           .where.not(content: "[インタビュー開始]")
+                                           .pluck(:content)
+
+      if user_messages.any?
+        "主な課題: #{user_messages.join('、')}"
+      else
+        "お話しいただいた内容"
       end
     end
 

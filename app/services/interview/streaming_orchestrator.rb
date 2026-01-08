@@ -1,3 +1,5 @@
+# ABOUTME: Streams assistant responses and updates conversation state in real time.
+# ABOUTME: Adds must-ask handling to streaming flow and turn limit checks.
 module Interview
   class StreamingOrchestrator
     def initialize(conversation, llm_client: nil)
@@ -14,7 +16,8 @@ module Interview
       user_turn_count = @conversation.messages.where(role: 0).count.to_i
       max_turns = (@project.limits.dig("max_turns") || 12).to_i
 
-      if user_turn_count >= max_turns
+      must_ask_manager = Interview::MustAskManager.new(@project, @conversation.meta)
+      if user_turn_count >= max_turns && !must_ask_manager.pending? && !@conversation.in_state?("summary_check")
         # Mark conversation as finished if turn limit reached
         @conversation.update!(finished_at: Time.current) unless @conversation.finished_at.present?
 
@@ -41,6 +44,13 @@ module Interview
       current_deepening_turn_count = persisted_deepening_turn_count
       next_state = @state_machine.determine_next_state(user_message, current_deepening_turn_count)
 
+      updated_meta = @conversation.meta || {}
+      if old_state == "must_ask"
+        updated_meta = must_ask_manager.advance_meta_for_answer(user_message.content)
+      elsif next_state == "must_ask"
+        updated_meta = must_ask_manager.start_meta
+      end
+
       updated_deepening_turn_count = current_deepening_turn_count
       if next_state == "deepening"
         updated_deepening_turn_count = (old_state == "deepening") ? current_deepening_turn_count + 1 : 1
@@ -48,22 +58,16 @@ module Interview
 
       @conversation.update!(
         state: next_state,
-        meta: @conversation.meta.merge("deepening_turn_count" => updated_deepening_turn_count)
+        meta: updated_meta.merge("deepening_turn_count" => updated_deepening_turn_count)
       )
 
-      # Build messages for LLM
       messages = build_conversation_history
       system_prompt = @prompt_builder.system_prompt
-      behavior_prompt = @prompt_builder.behavior_prompt_for_state(next_state, updated_deepening_turn_count)
-
-      # Handle special prompts that need interpolation
-      if next_state == "summary_check"
-        summary = generate_conversation_summary
-        behavior_prompt = behavior_prompt.gsub("{summary}", summary)
-      elsif next_state == "recommend"
-        most_important = identify_most_important_pain_point
-        behavior_prompt = behavior_prompt.gsub("{most_important}", most_important)
-      end
+      behavior_prompt = @prompt_builder.behavior_prompt_for_state_with_context(
+        next_state,
+        deepening_turn: updated_deepening_turn_count,
+        conversation: @conversation
+      )
 
       # Prepare streaming
       accumulated_content = ""
@@ -174,30 +178,13 @@ module Interview
       messages
     end
 
-    def identify_most_important_pain_point
-      pain_points = extract_pain_points_from_conversation
-      pain_points.first || "お話しいただいた課題"
-    end
-
-    def extract_pain_points_from_conversation
-      user_messages = @conversation.messages.where(role: 0).pluck(:content)
-      user_messages.reject { |msg| msg == "[スキップ]" || msg == "[インタビュー開始]" }
-    end
-
-    def generate_conversation_summary
-      user_messages = @conversation.messages.where(role: 0)
-                                          .where.not(content: "[スキップ]")
-                                          .pluck(:content)
-
-      if user_messages.any?
-        "主な課題: #{user_messages.join('、')}"
-      else
-        "お話しいただいた内容"
-      end
-    end
 
     def test_llm_client
       Class.new do
+        def initialize
+          @call_count = 0
+        end
+
         def stream_chat(messages:, **opts, &block)
           # Check if we should simulate an error for testing
           if ENV["SIMULATE_LLM_ERROR"] == "true"
@@ -205,7 +192,7 @@ module Interview
           end
 
           # Return a mock response for tests
-          response = "Test response from assistant"
+          response = build_response(messages)
 
           if block_given?
             # Simulate streaming by yielding chunks
@@ -217,6 +204,17 @@ module Interview
           end
 
           response
+        end
+
+        private
+
+        def build_response(messages)
+          behavior_prompt = messages.reverse.find { |msg| msg[:role] == "system" }&.dig(:content).to_s
+          must_ask_match = behavior_prompt.match(/必ず聞く項目:\s*([^\n]+)/)
+          return "次に、「#{must_ask_match[1]}」について教えてください。" if must_ask_match
+
+          @call_count += 1
+          "Test response from assistant #{@call_count}"
         end
       end.new
     end

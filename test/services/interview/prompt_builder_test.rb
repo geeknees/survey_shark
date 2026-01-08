@@ -1,3 +1,5 @@
+# ABOUTME: Tests prompt builder system and behavior prompts across states.
+# ABOUTME: Validates must-ask and summary interpolations for LLM guidance.
 require "test_helper"
 require_relative "../../../app/services/interview"
 require_relative "../../../app/services/interview/prompt_builder"
@@ -30,12 +32,9 @@ class Interview::PromptBuilderTest < ActiveSupport::TestCase
 
   test "generates appropriate behavior prompts for each state" do
     states_and_keywords = {
-      "intro" => [ "課題", "不便", "3つまで" ],
-      "enumerate" => [ "他に", "課題" ],
-      "recommend" => [ "重要" ],
-      "choose" => [ "選んで" ],
+      "intro" => [ "課題", "不便", "3つ" ],
       "deepening" => [ "詳しく" ],
-      "summary_check" => [ "まとめ", "確認" ]
+      "summary_check" => [ "要約", "確認" ]
     }
 
     states_and_keywords.each do |state, keywords|
@@ -45,6 +44,18 @@ class Interview::PromptBuilderTest < ActiveSupport::TestCase
         assert_includes prompt, keyword, "State #{state} should include keyword #{keyword}"
       end
     end
+  end
+
+  test "generates must_ask prompt with item and followup hint" do
+    prompt = @prompt_builder.behavior_prompt_for_state(
+      "must_ask",
+      0,
+      must_ask_item: "年齢",
+      must_ask_followup: true
+    )
+
+    assert_includes prompt, "必ず聞く項目: 年齢"
+    assert_includes prompt, "追質問"
   end
 
   test "handles different tone settings" do
@@ -74,9 +85,15 @@ class Interview::PromptBuilderTest < ActiveSupport::TestCase
     assert_includes prompt, "{summary}"
   end
 
-  test "interpolates most_important in recommend prompt" do
-    prompt = @prompt_builder.behavior_prompt_for_state("recommend")
+  test "builds summary_check prompt with conversation context" do
+    conversation = conversations(:one)
+    conversation.messages.create!(role: :user, content: "課題A")
 
-    assert_includes prompt, "{most_important}"
+    prompt = @prompt_builder.behavior_prompt_for_state_with_context(
+      "summary_check",
+      conversation: conversation
+    )
+
+    assert_includes prompt, "主な課題"
   end
 end

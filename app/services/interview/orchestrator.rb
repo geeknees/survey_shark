@@ -1,6 +1,8 @@
+# ABOUTME: Orchestrates interview state transitions and response creation.
+# ABOUTME: Ensures must-ask items are asked before summary and after deepening.
 module Interview
   class Orchestrator
-    STATES = %w[intro enumerate recommend choose deepening summary_check done].freeze
+    STATES = %w[intro deepening must_ask summary_check done].freeze
 
     def initialize(conversation, llm_client: nil)
       @conversation = conversation
@@ -24,7 +26,8 @@ module Interview
 
       begin
         # Check turn limit before processing
-        if @state_machine.turn_limit_reached?
+        must_ask_manager = Interview::MustAskManager.new(@project, @conversation.meta)
+        if @state_machine.turn_limit_reached? && !must_ask_manager.pending? && !@conversation.in_state?("summary_check")
           return handle_turn_limit_reached
         end
 
@@ -36,6 +39,13 @@ module Interview
         # Determine next state (using current deepening count)
         next_state = @state_machine.determine_next_state(user_message, current_deepening_turn_count)
 
+        updated_meta = @conversation.meta || {}
+        if old_state == "must_ask"
+          updated_meta = must_ask_manager.advance_meta_for_answer(user_message.content)
+        elsif next_state == "must_ask"
+          updated_meta = must_ask_manager.start_meta
+        end
+
         updated_deepening_turn_count = current_deepening_turn_count
         if next_state == "deepening"
           updated_deepening_turn_count = (old_state == "deepening") ? current_deepening_turn_count + 1 : 1
@@ -44,7 +54,7 @@ module Interview
         # Update conversation state
         @conversation.update!(
           state: next_state,
-          meta: @conversation.meta.merge("deepening_turn_count" => updated_deepening_turn_count)
+          meta: updated_meta.merge("deepening_turn_count" => updated_deepening_turn_count)
         )
 
         # Generate assistant response

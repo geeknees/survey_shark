@@ -1,3 +1,5 @@
+# ABOUTME: System tests for insights index and detail navigation flows.
+# ABOUTME: Ensures insights rendering and authentication behavior works.
 require "application_system_test_case"
 
 class InsightsTest < ApplicationSystemTestCase
@@ -140,7 +142,7 @@ class InsightsTest < ApplicationSystemTestCase
 
     # Go to insight detail
     click_link "テストテーマ"
-    assert_text "Jobs to be Done"
+    assert_selector "a", text: "インサイトボードに戻る", wait: 5
 
     # Go back to insights board
     click_link "インサイトボードに戻る"

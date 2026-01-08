@@ -1,3 +1,5 @@
+# ABOUTME: Integration tests for orchestrator behavior with OpenAI client.
+# ABOUTME: Verifies fallback handling and OpenAI call usage in production mode.
 require "test_helper"
 require "webmock/minitest"
 require_relative "../../../app/services/interview"
@@ -21,11 +23,7 @@ class Interview::OrchestratorOpenAIIntegrationTest < ActiveSupport::TestCase
   end
 
   test "switches to fallback mode on OpenAI error" do
-    # Skip this test as most states now use predefined questions
-    # and don't call OpenAI, making this test less relevant.
-    # OpenAI errors are now less likely since we only use OpenAI
-    # for recommend state and optional states.
-    skip "Most states use predefined questions and don't trigger OpenAI errors"
+    skip "OpenAI error handling is covered by client tests"
   end
 
   test "continues with fallback orchestrator once in fallback mode" do
@@ -46,24 +44,27 @@ class Interview::OrchestratorOpenAIIntegrationTest < ActiveSupport::TestCase
   end
 
   test "uses OpenAI client in production environment" do
-    # For structured states (intro, enumerate, choose, deepening),
-    # we use predefined questions directly without calling OpenAI
-    # This test now verifies that predefined questions are used
-
     # Temporarily set environment to production
     original_env = Rails.env
     Rails.env = "production"
 
     begin
       ENV["OPENAI_API_KEY"] = "test-key"
+      stub_request(:post, "https://api.openai.com/v1/chat/completions")
+        .to_return(
+          status: 200,
+          body: {
+            choices: [ { message: { content: "LLM response for production" } } ]
+          }.to_json
+        )
+
       orchestrator = Interview::Orchestrator.new(@conversation)
       user_message = @conversation.messages.create!(role: :user, content: "Hello")
 
       response = orchestrator.process_user_message(user_message)
 
-      # Verify we get a predefined question for enumerate state
-      assert_includes response, "課題や不便"
-      assert_equal "enumerate", @conversation.reload.state
+      assert_equal "LLM response for production", response
+      assert_equal "deepening", @conversation.reload.state
     ensure
       Rails.env = original_env
       ENV.delete("OPENAI_API_KEY")
@@ -71,20 +72,26 @@ class Interview::OrchestratorOpenAIIntegrationTest < ActiveSupport::TestCase
   end
 
   test "handles network timeout and retries" do
-    # For structured states, we don't use OpenAI, so this test now verifies
-    # that predefined questions work even when OpenAI would timeout
-
     ENV["OPENAI_API_KEY"] = "test-key"
     openai_client = LLM::Client::OpenAI.new(api_key: "test-key")
     orchestrator = Interview::Orchestrator.new(@conversation, llm_client: openai_client)
+
+    stub_request(:post, "https://api.openai.com/v1/chat/completions")
+      .to_timeout
+      .then
+      .to_return(
+        status: 200,
+        body: {
+          choices: [ { message: { content: "Success after timeout retry" } } ]
+        }.to_json
+      )
 
     user_message = @conversation.messages.create!(role: :user, content: "Hello")
 
     response = orchestrator.process_user_message(user_message)
 
-    # Verify we get a predefined question (not affected by network issues)
-    assert_includes response, "課題や不便"
-    assert_equal "enumerate", @conversation.reload.state
+    assert_equal "Success after timeout retry", response
+    assert_equal "deepening", @conversation.reload.state
   ensure
     ENV.delete("OPENAI_API_KEY")
   end
