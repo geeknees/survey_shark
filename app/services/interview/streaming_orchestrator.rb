@@ -217,7 +217,7 @@ module Interview
 
         def build_response(messages)
           behavior_prompt = messages.reverse.find { |msg| msg[:role] == "system" }&.dig(:content).to_s
-          must_ask_match = behavior_prompt.match(/必ず聞く項目:\s*(.+)/)
+          must_ask_match = behavior_prompt.match(/必ず聞く項目:\s*([^\n]+)/)
           return "次に、「#{must_ask_match[1]}」について教えてください。" if must_ask_match
 
           @call_count += 1
