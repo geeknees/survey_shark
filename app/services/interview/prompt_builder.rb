@@ -67,6 +67,25 @@ module Interview
       end
     end
 
+    def behavior_prompt_for_state_with_context(state, deepening_turn: 0, conversation: nil, meta: nil)
+      case state
+      when "summary_check"
+        summary = build_conversation_summary(conversation)
+        behavior_prompt_for_state(state, deepening_turn)
+          .gsub("{summary}", summary)
+      when "must_ask"
+        must_ask_manager = Interview::MustAskManager.new(@project, meta || conversation&.meta)
+        behavior_prompt_for_state(
+          state,
+          deepening_turn,
+          must_ask_item: must_ask_manager.current_item,
+          must_ask_followup: must_ask_manager.followup?
+        )
+      else
+        behavior_prompt_for_state(state, deepening_turn)
+      end
+    end
+
     private
 
     def deepening_prompt(turn_count)
@@ -96,6 +115,21 @@ module Interview
         "カジュアルだが明快"
       else
         "丁寧"
+      end
+    end
+
+    def build_conversation_summary(conversation)
+      return "お話しいただいた内容" unless conversation
+
+      user_messages = conversation.messages.where(role: 0)
+                                           .where.not(content: "[スキップ]")
+                                           .where.not(content: "[インタビュー開始]")
+                                           .pluck(:content)
+
+      if user_messages.any?
+        "主な課題: #{user_messages.join('、')}"
+      else
+        "お話しいただいた内容"
       end
     end
 

@@ -84,4 +84,16 @@ class Interview::PromptBuilderTest < ActiveSupport::TestCase
 
     assert_includes prompt, "{summary}"
   end
+
+  test "builds summary_check prompt with conversation context" do
+    conversation = conversations(:one)
+    conversation.messages.create!(role: :user, content: "課題A")
+
+    prompt = @prompt_builder.behavior_prompt_for_state_with_context(
+      "summary_check",
+      conversation: conversation
+    )
+
+    assert_includes prompt, "主な課題"
+  end
 end

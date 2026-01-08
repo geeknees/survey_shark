@@ -54,7 +54,8 @@ module Interview
       next_index = current_index + 1
       @meta.merge(
         "must_ask_index" => next_index,
-        "must_ask_followup" => false
+        "must_ask_followup" => false,
+        "must_ask_followup_count" => 0
       )
     end
 
@@ -102,9 +103,9 @@ module Interview
     def advance_after_followup_limit
       next_index = current_index + 1
       @meta.merge(
-        "must_ask_index" => next_index,
-        "must_ask_followup" => false,
-        "must_ask_followup_count" => 0
+      "must_ask_index" => next_index,
+      "must_ask_followup" => false,
+      "must_ask_followup_count" => 0
       )
     end
   end

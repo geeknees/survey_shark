@@ -63,7 +63,11 @@ module Interview
 
       messages = build_conversation_history
       system_prompt = @prompt_builder.system_prompt
-      behavior_prompt = build_behavior_prompt(next_state, updated_deepening_turn_count)
+      behavior_prompt = @prompt_builder.behavior_prompt_for_state_with_context(
+        next_state,
+        deepening_turn: updated_deepening_turn_count,
+        conversation: @conversation
+      )
 
       # Prepare streaming
       accumulated_content = ""
@@ -174,17 +178,6 @@ module Interview
       messages
     end
 
-    def generate_conversation_summary
-      user_messages = @conversation.messages.where(role: 0)
-                                          .where.not(content: "[スキップ]")
-                                          .pluck(:content)
-
-      if user_messages.any?
-        "主な課題: #{user_messages.join('、')}"
-      else
-        "お話しいただいた内容"
-      end
-    end
 
     def test_llm_client
       Class.new do
@@ -226,23 +219,5 @@ module Interview
       end.new
     end
 
-    def build_behavior_prompt(state, deepening_turn_count)
-      case state
-      when "summary_check"
-        summary = generate_conversation_summary
-        @prompt_builder.behavior_prompt_for_state(state, deepening_turn_count)
-                      .gsub("{summary}", summary)
-      when "must_ask"
-        must_ask_manager = Interview::MustAskManager.new(@project, @conversation.meta)
-        @prompt_builder.behavior_prompt_for_state(
-          state,
-          deepening_turn_count,
-          must_ask_item: must_ask_manager.current_item,
-          must_ask_followup: must_ask_manager.followup?
-        )
-      else
-        @prompt_builder.behavior_prompt_for_state(state, deepening_turn_count)
-      end
-    end
   end
 end
