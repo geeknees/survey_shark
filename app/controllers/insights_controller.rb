@@ -46,23 +46,24 @@ class InsightsController < ApplicationController
   end
 
   def insights_as_csv(insights)
-    rows = []
-    rows << %w[rank theme jtbds severity freq_conversations freq_messages confidence_label evidence]
+    require "csv"
 
-    insights.each_with_index do |insight, index|
-      rows << [
-        index + 1,
-        insight.theme,
-        insight.jtbds,
-        insight.severity,
-        insight.freq_conversations,
-        insight.freq_messages,
-        insight.confidence_label,
-        insight.evidence.join(" | ")
-      ]
+    headers = %w[rank theme jtbds severity freq_conversations freq_messages confidence_label evidence]
+    CSV.generate(headers: true) do |csv|
+      csv << headers
+      insights.each_with_index do |insight, index|
+        csv << [
+          index + 1,
+          insight.theme,
+          insight.jtbds,
+          insight.severity,
+          insight.freq_conversations,
+          insight.freq_messages,
+          insight.confidence_label,
+          insight.evidence.join(" | ")
+        ]
+      end
     end
-
-    rows.map { |row| row.map { |value| csv_escape(value) }.join(",") }.join("\n") + "\n"
   end
 
   def insights_as_markdown(insights)
@@ -93,11 +94,5 @@ class InsightsController < ApplicationController
 
   def set_project
     @project = Project.find(params[:project_id])
-  end
-
-  def csv_escape(value)
-    string_value = value.to_s
-    escaped = string_value.gsub("\"", "\"\"")
-    "\"#{escaped}\""
   end
 end

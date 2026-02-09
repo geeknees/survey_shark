@@ -38,8 +38,8 @@ class InsightsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.media_type, "text/csv"
-    assert_includes response.body, "\"rank\",\"theme\",\"jtbds\",\"severity\",\"freq_conversations\",\"freq_messages\",\"confidence_label\",\"evidence\""
-    assert_includes response.body, "\"1\",\"システムの使いやすさ\""
+    assert_includes response.body, "rank,theme,jtbds,severity,freq_conversations,freq_messages,confidence_label,evidence"
+    assert_includes response.body, "1,システムの使いやすさ"
   end
 
   test "exports insights as markdown" do
