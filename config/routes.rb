@@ -7,7 +7,11 @@ Rails.application.routes.draw do
       post :generate_invite_link
     end
 
-    resources :insights, only: [ :index, :show ]
+    resources :insights, only: [ :index, :show ] do
+      collection do
+        get :export
+      end
+    end
   end
   resource :session
   resources :passwords, param: :token

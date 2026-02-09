@@ -33,6 +33,31 @@ class InsightsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", "インサイトボード"
   end
 
+  test "exports insights as csv" do
+    get export_project_insights_path(@project, format_type: "csv")
+
+    assert_response :success
+    assert_includes response.media_type, "text/csv"
+    assert_includes response.body, "\"rank\",\"theme\",\"jtbds\",\"severity\",\"freq_conversations\",\"freq_messages\",\"confidence_label\",\"evidence\""
+    assert_includes response.body, "\"1\",\"システムの使いやすさ\""
+  end
+
+  test "exports insights as markdown" do
+    get export_project_insights_path(@project, format_type: "markdown")
+
+    assert_response :success
+    assert_includes response.media_type, "text/markdown"
+    assert_includes response.body, "# インサイトレポート"
+    assert_includes response.body, "## 1. システムの使いやすさ"
+  end
+
+  test "redirects on unsupported export format" do
+    get export_project_insights_path(@project, format_type: "xml")
+
+    assert_redirected_to project_insights_path(@project)
+    assert_equal "Unsupported export format.", flash[:alert]
+  end
+
   test "index shows insights ordered by frequency" do
     get project_insights_path(@project)
 

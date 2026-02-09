@@ -1,6 +1,6 @@
 # SurveyShark 機能追加アイディア（ユーザー価値ベース）
 
-最終更新: 2026-02-08
+最終更新: 2026-02-09
 参照: `docs/spec.md`, `docs/todo.md`, `docs/refactoring_plan.md`, `docs/chat_workflow.md`, `docs/chat_algorithms.md`, `docs/system_architecture.md`
 
 ## 方針
@@ -14,7 +14,7 @@
 | 優先度 | 機能案 | 喜ばれる理由 | 主対象 | 規模 |
 |---|---|---|---|---|
 | 1 | 回答の自動保存 + 再開機能 | 離脱しても途中から再開でき、回答完了率が上がる | 回答者 | Medium |
-| 2 | 分析結果のエクスポート（CSV / Markdown） | チーム共有・報告資料化が一気に楽になる | 管理者 | Small |
+| 2 | 分析結果のエクスポート（CSV / Markdown） | チーム共有・報告資料化が一気に楽になる | 管理者 | Small（実装済み） |
 | 3 | 期間フィルタ + 再集計ボタン | 直近の反応や施策前後比較ができ、意思決定が速くなる | 管理者 | Medium |
 | 4 | 読み取り専用共有リンク（インサイト閲覧） | 非管理者にも安全に結果共有できる | 管理者 | Medium |
 | 5 | Slack / メール通知（新規回答・強いペイン検出） | ダッシュボードを見に行かなくても重要変化に気づける | 管理者 | Medium |
@@ -39,3 +39,7 @@
 
 - `docs/todo.md`にある既知課題（PIIフィルター、ターン上限周り、Initial Question未反映）は、上記機能の効果を下げるため先に安定化しておくとよい。
 - `docs/refactoring_plan.md`の高優先リファクタ（state/meta統合、streaming/non-streaming整合）を先行すると、機能追加時のバグ混入リスクを下げられる。
+
+## 実装メモ
+
+- 2026-02-09: 「分析結果のエクスポート（CSV / Markdown）」を `insights` 画面に実装。
