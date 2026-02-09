@@ -6,6 +6,9 @@
 - [ ] Initial Questionが採用されていない
 - [ ] 個人情報フィルターが動いていない
 
+## ✅ 最近完了した機能
+- [x] 分析結果のエクスポート（CSV / Markdown）をインサイト画面に追加
+
 ## 🔧 コードリファクタリング計画
 
 ### 🧩 Refactoring Plan (docs/refactoring_plan.md)
