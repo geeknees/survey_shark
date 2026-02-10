@@ -113,3 +113,19 @@
   - `llm/client/openai.rb`, `pii/detector.rb`, `analysis/conversation_analyzer.rb`
 - Stimulus: `app/javascript/controllers/*.js`
 - Views: `app/views/conversations/*.erb`
+
+## 11. 動的クイック返信（最大3件）
+
+- 生成箇所: `ConversationsHelper#quick_reply_suggestions`
+- 基本ルール:
+  - `intro/deepening/must_ask/summary_check` の状態ごとにベース候補を定義
+  - 常に最大3件を表示（重複除去後に先頭3件）
+- 文脈ルール（`deepening` / `must_ask`）:
+  - 直前のユーザー回答が短文（20文字以下）なら「具体化」候補を優先
+  - 「わからない」系の回答なら「思い出せる範囲で答える」候補を優先
+  - 否定表現（違う/いや）を含む場合は「別の理由」候補を優先
+- 除外:
+  - `"[スキップ]"` と `"[インタビュー開始]"` は文脈判定対象に含めない
+- UI更新:
+  - 初期表示: `app/views/conversations/_quick_replies.html.erb`
+  - ポーリング更新時: `chat_composer_controller.js#pollForAssistantResponse` で `#quick_replies` を差し替え
