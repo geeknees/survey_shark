@@ -17,6 +17,18 @@ class ConversationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "textarea[name='content']"
   end
 
+  test "should render dynamic quick replies for summary check state" do
+    @conversation.update!(state: "summary_check")
+
+    get conversation_path(@conversation)
+    assert_response :success
+
+    assert_select "#quick_replies button", count: 3
+    assert_select "#quick_replies button", text: "はい、合っています"
+    assert_select "#quick_replies button", text: "少し違います"
+    assert_select "#quick_replies button", text: "この点を修正します"
+  end
+
   test "should create user message" do
     assert_difference "Message.count", 1 do
       post create_message_conversation_path(@conversation), params: { content: "Hello world" }
@@ -80,6 +92,18 @@ class ConversationsControllerTest < ActionDispatch::IntegrationTest
     assert_includes @response.body, 'id="messages"'
     assert_includes @response.body, "message_#{m1.id}"
     assert_includes @response.body, "message_#{m2.id}"
+  end
+
+  test "messages endpoint should include quick replies for current state" do
+    @conversation.update!(state: "summary_check")
+
+    get messages_conversation_path(@conversation)
+    assert_response :success
+
+    assert_includes @response.body, 'id="quick_replies"'
+    assert_includes @response.body, "はい、合っています"
+    assert_includes @response.body, "少し違います"
+    assert_includes @response.body, "この点を修正します"
   end
 
   test "should not create message when max turns reached and mark finished" do

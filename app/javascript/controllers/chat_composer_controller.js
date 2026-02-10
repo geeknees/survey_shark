@@ -194,6 +194,13 @@ export default class extends Controller {
             break
           }
         }
+
+        const newQuickReplies = doc.querySelector('#quick_replies')
+        const currentQuickReplies = document.getElementById('quick_replies')
+        if (newQuickReplies && currentQuickReplies) {
+          currentQuickReplies.className = newQuickReplies.className
+          currentQuickReplies.innerHTML = newQuickReplies.innerHTML
+        }
       } catch (e) {
         dwarn('Poll iteration failed:', e)
         // ignore and continue
