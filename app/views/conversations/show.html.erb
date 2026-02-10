@@ -73,18 +73,7 @@
             </div>
           </div>
 
-          <!-- Quick Replies -->
-          <div class="space-y-2">
-            <div class="text-sm text-gray-600">クイック返信:</div>
-            <div class="flex flex-wrap gap-2">
-              <button type="button"
-                      class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm hover:bg-gray-200 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-                      data-action="click->chat-composer#insertQuickReply"
-                      data-text="質問を言い換えて">
-                質問を言い換えて
-              </button>
-            </div>
-          </div>
+          <%= render "conversations/quick_replies", conversation: @conversation %>
 
           <!-- Character Counter -->
           <div class="text-xs text-gray-500 text-right">
