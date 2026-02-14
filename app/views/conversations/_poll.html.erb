@@ -5,3 +5,7 @@
 <%= render "conversations/messages", messages: messages %>
 
 <%= render "conversations/quick_replies", conversation: conversation %>
+
+<div id="conversation_status"
+     data-finished="<%= conversation.finished_at.present? %>"
+     data-thank-you-path="<%= project_thank_you_path(conversation.project) %>"></div>

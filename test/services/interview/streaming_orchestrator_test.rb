@@ -27,6 +27,19 @@ class Interview::StreamingOrchestratorTest < ActiveSupport::TestCase
     assert debug["user_turn_count"].to_i >= 1
   end
 
+  test "uses project's initial question verbatim for interview start trigger" do
+    @conversation.update!(state: "intro")
+    @project.update!(initial_question: "最初に、いま一番困っていることを1つ教えてください。")
+
+    user_message = @conversation.messages.create!(role: :user, content: "[インタビュー開始]")
+    response = @orchestrator.process_user_message_with_streaming(user_message)
+
+    assistant_message = @conversation.messages.assistant.last
+    assert_equal @project.initial_question, response
+    assert_equal @project.initial_question, assistant_message.content
+    assert_equal "intro", @conversation.reload.state
+  end
+
   test "persists deepening turn count across turns" do
     @conversation.update!(state: "intro", meta: {})
     @project.update!(limits: @project.limits.merge("max_deep" => 1))

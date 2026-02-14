@@ -1,3 +1,5 @@
+// ABOUTME: Refreshes messages/progress as a fallback when Turbo stream updates are missed.
+// ABOUTME: Redirects to thank-you when the polled conversation payload reports completion.
 import { Controller } from '@hotwired/stimulus'
 
 // Debug helpers (enable by setting window.SURVEY_SHARK_DEBUG = true)
@@ -67,6 +69,18 @@ export default class extends Controller {
     }
     const html = await res.text()
     const doc = new DOMParser().parseFromString(html, 'text/html')
+
+    const statusNode = doc.querySelector('#conversation_status')
+    if (statusNode && statusNode.dataset.finished === 'true') {
+      const thankYouPath = statusNode.dataset.thankYouPath
+      if (thankYouPath) {
+        window.location.href = thankYouPath
+      } else {
+        window.location.reload()
+      }
+      return
+    }
+
     const newMessages = doc.querySelector('#messages')
     const current = document.getElementById('messages')
 

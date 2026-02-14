@@ -3,7 +3,11 @@ ENV["RAILS_ENV"] ||= "test"
 ENV["OPENAI_API_KEY"] ||= "test-api-key"
 require_relative "../config/environment"
 require "rails/test_help"
-require "minitest/mock"
+begin
+  require "minitest/mock"
+rescue LoadError
+  # Ruby runtime may bundle minitest without a separate mock file.
+end
 
 # Load test-specific files
 require_relative "../app/services/analysis/fake_llm_client"

@@ -14,11 +14,11 @@ module Interview
     def process_user_message(user_message)
       # Check turn limit before processing
       user_turn_count = @conversation.messages.where(role: 0).count.to_i
-      max_turns = (@conversation.project.limits.dig("max_turns") || 12).to_i
+      max_turns = max_turns_limit
 
       if user_turn_count >= max_turns
         # Mark conversation as finished if turn limit reached
-        @conversation.update!(finished_at: Time.current) unless @conversation.finished_at.present?
+        @conversation.update!(state: "done", finished_at: Time.current) unless @conversation.finished_at.present?
 
         # Create a final assistant message indicating completion
         @conversation.messages.create!(
@@ -97,6 +97,11 @@ module Interview
       # 3 user messages -> ask question 3 (index 2)
       # 4+ user messages -> finish (return > FALLBACK_QUESTIONS.length)
       [ user_messages_count, 1 ].max
+    end
+
+    def max_turns_limit
+      limits = @conversation.project.limits.is_a?(Hash) ? @conversation.project.limits : {}
+      (limits["max_turns"] || limits[:max_turns] || 12).to_i
     end
   end
 end

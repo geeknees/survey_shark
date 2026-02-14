@@ -106,6 +106,17 @@ class ConversationsControllerTest < ActionDispatch::IntegrationTest
     assert_includes @response.body, "この点を修正します"
   end
 
+  test "messages endpoint includes completion status for finished conversation" do
+    @conversation.update!(state: "done", finished_at: Time.current)
+
+    get messages_conversation_path(@conversation)
+    assert_response :success
+
+    assert_includes @response.body, 'id="conversation_status"'
+    assert_includes @response.body, 'data-finished="true"'
+    assert_includes @response.body, project_thank_you_path(@conversation.project)
+  end
+
   test "should not create message when max turns reached and mark finished" do
     # Exhaust user turns to the limit
     max_turns = (@conversation.project.limits.dig("max_turns") || 12).to_i
