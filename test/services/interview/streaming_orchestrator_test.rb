@@ -4,6 +4,8 @@ require "test_helper"
 require_relative "../../../app/services/interview/streaming_orchestrator"
 
 class Interview::StreamingOrchestratorTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
   def setup
     @project = projects(:one)
     @conversation = conversations(:one)
@@ -72,5 +74,17 @@ class Interview::StreamingOrchestratorTest < ActiveSupport::TestCase
     end
   ensure
     ENV.delete("SIMULATE_LLM_ERROR")
+  end
+
+  test "enqueues analysis job when conversation reaches done state" do
+    @conversation.update!(state: "summary_check", finished_at: nil)
+
+    user_message = @conversation.messages.create!(role: :user, content: "はい")
+
+    assert_enqueued_with(job: AnalyzeConversationJob, args: [ @conversation.id ]) do
+      @orchestrator.process_user_message_with_streaming(user_message)
+    end
+
+    assert_not_nil @conversation.reload.finished_at
   end
 end

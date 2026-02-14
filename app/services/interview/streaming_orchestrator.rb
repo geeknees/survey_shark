@@ -19,7 +19,10 @@ module Interview
       must_ask_manager = Interview::MustAskManager.new(@project, @conversation.meta)
       if user_turn_count >= max_turns && !must_ask_manager.pending? && !@conversation.in_state?("summary_check")
         # Mark conversation as finished if turn limit reached
-        @conversation.update!(state: "done", finished_at: Time.current) unless @conversation.finished_at.present?
+        unless @conversation.finished_at.present?
+          @conversation.update!(state: "done", finished_at: Time.current)
+          AnalyzeConversationJob.perform_later(@conversation.id)
+        end
 
         # Check if project should be auto-closed
         @conversation.project.check_and_auto_close!
@@ -32,9 +35,6 @@ module Interview
 
         # Broadcast the final message using the broadcast manager
         @broadcast_manager.broadcast_final_update
-
-        # Enqueue analysis job for finished conversation
-        AnalyzeConversationJob.perform_later(@conversation.id)
 
         return "ご協力いただきありがとうございました。インタビューを終了します。"
       end
@@ -132,7 +132,10 @@ module Interview
 
       # Check if conversation is complete
       if next_state == "done"
-        @conversation.update!(finished_at: Time.current)
+        unless @conversation.finished_at.present?
+          @conversation.update!(finished_at: Time.current)
+          AnalyzeConversationJob.perform_later(@conversation.id)
+        end
       end
 
       accumulated_content
