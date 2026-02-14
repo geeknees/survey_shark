@@ -13,4 +13,14 @@ class ConversationsProgressPartialTest < ActionView::TestCase
     assert_select "div#conversation_progress"
     assert_select "div", text: /残り 12 ターン/
   end
+
+  test "caps progress bar width at 100 percent when user turns exceed limit" do
+    conversation = conversations(:one)
+    conversation.project.update!(limits: conversation.project.limits.merge("max_turns" => 1))
+    3.times { |i| conversation.messages.create!(role: :user, content: "over #{i}") }
+
+    render partial: "conversations/progress", locals: { conversation: conversation }
+
+    assert_match(/style="width: 100(\.0)?%"/, rendered)
+  end
 end

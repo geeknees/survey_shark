@@ -12,6 +12,11 @@ module Interview
 
     # Generate assistant response for the given state
     def generate_response(state, user_message, deepening_turn_count = 0)
+      if state == "intro" && user_message.content.to_s.strip == "[インタビュー開始]"
+        initial_question = @project.initial_question.to_s.strip
+        return initial_question if initial_question.present?
+      end
+
       messages = build_conversation_history
       system_prompt = @prompt_builder.system_prompt
       behavior_prompt = @prompt_builder.behavior_prompt_for_state_with_context(

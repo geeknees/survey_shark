@@ -4,6 +4,8 @@ require "test_helper"
 require_relative "../../../app/services/interview/streaming_orchestrator"
 
 class Interview::StreamingOrchestratorTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
   def setup
     @project = projects(:one)
     @conversation = conversations(:one)
@@ -25,6 +27,19 @@ class Interview::StreamingOrchestratorTest < ActiveSupport::TestCase
     assert debug.present?
     assert_equal @conversation.reload.state, debug["state"]
     assert debug["user_turn_count"].to_i >= 1
+  end
+
+  test "uses project's initial question verbatim for interview start trigger" do
+    @conversation.update!(state: "intro")
+    @project.update!(initial_question: "最初に、いま一番困っていることを1つ教えてください。")
+
+    user_message = @conversation.messages.create!(role: :user, content: "[インタビュー開始]")
+    response = @orchestrator.process_user_message_with_streaming(user_message)
+
+    assistant_message = @conversation.messages.assistant.last
+    assert_equal @project.initial_question, response
+    assert_equal @project.initial_question, assistant_message.content
+    assert_equal "intro", @conversation.reload.state
   end
 
   test "persists deepening turn count across turns" do
@@ -59,5 +74,17 @@ class Interview::StreamingOrchestratorTest < ActiveSupport::TestCase
     end
   ensure
     ENV.delete("SIMULATE_LLM_ERROR")
+  end
+
+  test "enqueues analysis job when conversation reaches done state" do
+    @conversation.update!(state: "summary_check", finished_at: nil)
+
+    user_message = @conversation.messages.create!(role: :user, content: "はい")
+
+    assert_enqueued_with(job: AnalyzeConversationJob, args: [ @conversation.id ]) do
+      @orchestrator.process_user_message_with_streaming(user_message)
+    end
+
+    assert_not_nil @conversation.reload.finished_at
   end
 end

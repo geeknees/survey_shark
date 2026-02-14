@@ -42,6 +42,13 @@ class ConversationProgressTest < ActiveSupport::TestCase
     assert_equal 12, @conversation.max_turns
   end
 
+  test "max_turns supports symbol keys in limits" do
+    @project.update!(limits: { max_turns: 7 })
+    @conversation.reload
+
+    assert_equal 7, @conversation.max_turns
+  end
+
   test "remaining_turns calculates correctly" do
     @project.update!(limits: { "max_turns" => 10 })
     @conversation.messages.create!(role: :user, content: "User message 1")
@@ -72,6 +79,13 @@ class ConversationProgressTest < ActiveSupport::TestCase
 
   test "progress_percentage returns 100 for finished conversations" do
     @conversation.update!(finished_at: Time.current)
+    assert_equal 100, @conversation.progress_percentage
+  end
+
+  test "progress_percentage is capped at 100 when user turns exceed limit" do
+    @project.update!(limits: { "max_turns" => 1 })
+    3.times { |i| @conversation.messages.create!(role: :user, content: "User message #{i}") }
+
     assert_equal 100, @conversation.progress_percentage
   end
 

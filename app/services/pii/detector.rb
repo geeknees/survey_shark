@@ -68,22 +68,16 @@ module PII
     end
 
     def parse_llm_response(original_text, response)
-      # Parse the structured response from LLM
-      pii_detected = response.include?("PII_DETECTED: true")
+      normalized_response = normalize_response(response)
 
-      # Extract masked text
-      masked_text = if response =~ /MASKED_TEXT: (.+?)(?:\n|$)/m
-        $1.strip
-      else
-        original_text
-      end
+      pii_detected = parse_pii_detected(normalized_response)
+      masked_text = parse_masked_text(normalized_response, original_text)
+      detected_items = parse_detected_items(normalized_response)
 
-      # Extract detected items
-      detected_items = if response =~ /DETECTED_ITEMS: (.+?)(?:\n|$)/m
-        items = $1.strip.split(/[,、]/).map(&:strip).reject(&:empty?)
-        items.reject { |item| item == "なし" || item.downcase == "none" }
-      else
-        []
+      if pii_detected.nil?
+        pii_detected = detected_items.any? || masked_text != original_text
+      elsif !pii_detected && (detected_items.any? || masked_text != original_text)
+        pii_detected = true
       end
 
       PII::DetectionResult.new(original_text, pii_detected, masked_text, detected_items)
@@ -95,6 +89,34 @@ module PII
       else
         LLM::Client::OpenAI.new
       end
+    end
+
+    def normalize_response(response)
+      response.to_s.gsub(/\A```[a-zA-Z]*\s*/m, "").gsub(/```$/, "").strip
+    end
+
+    def parse_pii_detected(response)
+      match = response.match(/PII_DETECTED\s*[:：]\s*(true|false)/i)
+      return nil unless match
+
+      match[1].casecmp("true").zero?
+    end
+
+    def parse_masked_text(response, original_text)
+      match = response.match(/MASKED_TEXT\s*[:：]\s*(.*?)(?:\nDETECTED_ITEMS\s*[:：]|\z)/mi)
+      return original_text unless match
+
+      candidate = match[1].to_s.strip
+      candidate.present? ? candidate : original_text
+    end
+
+    def parse_detected_items(response)
+      match = response.match(/DETECTED_ITEMS\s*[:：]\s*(.+?)(?:\n|\z)/mi)
+      return [] unless match
+
+      items_text = match[1].to_s.strip.delete_prefix("[").delete_suffix("]")
+      items = items_text.split(/[,、]/).map(&:strip).reject(&:empty?)
+      items.reject { |item| item == "なし" || item.casecmp("none").zero? }
     end
   end
 end

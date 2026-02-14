@@ -20,12 +20,13 @@ module ConversationProgress
 
   # Get maximum allowed turns from project limits
   def max_turns
-    (project.limits.dig("max_turns") || 12).to_i
+    limits = project.limits.is_a?(Hash) ? project.limits : {}
+    (limits["max_turns"] || limits[:max_turns] || 12).to_i
   end
 
   # Get remaining turns available
   def remaining_turns
-    max_turns - user_message_count
+    [ max_turns - user_message_count, 0 ].max
   end
 
   # Check if should finish based on turns
@@ -38,7 +39,7 @@ module ConversationProgress
     return 100 if finished?
     return 0 if max_turns.zero?
 
-    ((user_message_count.to_f / max_turns) * 100).round
+    [ ((user_message_count.to_f / max_turns) * 100).round, 100 ].min
   end
 
   # Get human-readable progress status

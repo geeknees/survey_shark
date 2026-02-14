@@ -7,7 +7,7 @@ class ConversationsController < ApplicationController
   def show
     @messages = @conversation.messages.order(:created_at)
     @user_turn_count = @conversation.messages.where(role: 0).count.to_i
-    @max_turns = (@conversation.project.limits.dig("max_turns") || 12).to_i
+    @max_turns = max_turns_for(@conversation.project)
     @remaining_turns = [ @max_turns - @user_turn_count, 0 ].max
     @debug_mode = debug_mode?
 
@@ -29,11 +29,14 @@ class ConversationsController < ApplicationController
 
     # Check turn limit before creating message
     user_turn_count = @conversation.messages.where(role: 0).count.to_i
-    max_turns = (@conversation.project.limits.dig("max_turns") || 12).to_i
+    max_turns = max_turns_for(@conversation.project)
 
     if user_turn_count >= max_turns && !@conversation.allow_over_turn_limit?
       # Mark conversation as finished if turn limit reached
-      @conversation.update!(finished_at: Time.current) unless @conversation.finished_at.present?
+      unless @conversation.finished_at.present?
+        @conversation.update!(state: "done", finished_at: Time.current)
+        AnalyzeConversationJob.perform_later(@conversation.id)
+      end
       return redirect_to @conversation
     end
 
@@ -62,11 +65,14 @@ class ConversationsController < ApplicationController
 
     # Check turn limit before creating skip message
     user_turn_count = @conversation.messages.where(role: 0).count.to_i
-    max_turns = (@conversation.project.limits.dig("max_turns") || 12).to_i
+    max_turns = max_turns_for(@conversation.project)
 
     if user_turn_count >= max_turns && !@conversation.allow_over_turn_limit?
       # Mark conversation as finished if turn limit reached
-      @conversation.update!(finished_at: Time.current) unless @conversation.finished_at.present?
+      unless @conversation.finished_at.present?
+        @conversation.update!(state: "done", finished_at: Time.current)
+        AnalyzeConversationJob.perform_later(@conversation.id)
+      end
       return redirect_to @conversation
     end
 
@@ -102,5 +108,10 @@ class ConversationsController < ApplicationController
     return false unless Rails.env.development? || Rails.env.test?
 
     params[:debug].present?
+  end
+
+  def max_turns_for(project)
+    limits = project.limits.is_a?(Hash) ? project.limits : {}
+    (limits["max_turns"] || limits[:max_turns] || 12).to_i
   end
 end

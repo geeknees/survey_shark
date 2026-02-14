@@ -106,6 +106,29 @@ class PII::DetectorTest < ActiveSupport::TestCase
     assert_equal "田中太郎です", result.masked_content
   end
 
+  test "parses uppercase boolean and multiline masked text" do
+    llm_client = Class.new do
+      def generate_response(**)
+        <<~RESPONSE
+          PII_DETECTED: TRUE
+          MASKED_TEXT:
+          私は[氏名]です。
+          電話番号は[電話番号]です。
+          DETECTED_ITEMS: 氏名, 電話番号
+        RESPONSE
+      end
+    end
+
+    detector = PII::Detector.new(llm_client: llm_client.new)
+    result = detector.analyze("私は田中太郎です。電話番号は03-1234-5678です。")
+
+    assert result.pii_detected?
+    assert_includes result.masked_content, "[氏名]"
+    assert_includes result.masked_content, "[電話番号]"
+    assert_includes result.detected_items, "氏名"
+    assert_includes result.detected_items, "電話番号"
+  end
+
   test "uses fake client in test environment" do
     detector = PII::Detector.new
     assert_instance_of PII::FakeLLMClient, detector.instance_variable_get(:@llm_client)

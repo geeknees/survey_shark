@@ -14,12 +14,15 @@ module Interview
     def process_user_message_with_streaming(user_message)
       # Check turn limit before processing
       user_turn_count = @conversation.messages.where(role: 0).count.to_i
-      max_turns = (@project.limits.dig("max_turns") || 12).to_i
+      max_turns = max_turns_limit
 
       must_ask_manager = Interview::MustAskManager.new(@project, @conversation.meta)
       if user_turn_count >= max_turns && !must_ask_manager.pending? && !@conversation.in_state?("summary_check")
         # Mark conversation as finished if turn limit reached
-        @conversation.update!(finished_at: Time.current) unless @conversation.finished_at.present?
+        unless @conversation.finished_at.present?
+          @conversation.update!(state: "done", finished_at: Time.current)
+          AnalyzeConversationJob.perform_later(@conversation.id)
+        end
 
         # Check if project should be auto-closed
         @conversation.project.check_and_auto_close!
@@ -32,9 +35,6 @@ module Interview
 
         # Broadcast the final message using the broadcast manager
         @broadcast_manager.broadcast_final_update
-
-        # Enqueue analysis job for finished conversation
-        AnalyzeConversationJob.perform_later(@conversation.id)
 
         return "ご協力いただきありがとうございました。インタビューを終了します。"
       end
@@ -61,6 +61,18 @@ module Interview
         meta: updated_meta.merge("deepening_turn_count" => updated_deepening_turn_count)
       )
 
+      debug_meta = debug_enabled? ? build_debug_meta(next_state, updated_deepening_turn_count) : {}
+      initial_question = intro_initial_question(next_state, user_message)
+      if initial_question.present?
+        assistant_message = @conversation.messages.create!(
+          role: 1,
+          content: initial_question,
+          meta: debug_meta
+        )
+        @broadcast_manager.broadcast_message_update(assistant_message)
+        return initial_question
+      end
+
       messages = build_conversation_history
       system_prompt = @prompt_builder.system_prompt
       behavior_prompt = @prompt_builder.behavior_prompt_for_state_with_context(
@@ -72,8 +84,6 @@ module Interview
       # Prepare streaming
       accumulated_content = ""
       assistant_message = nil
-
-      debug_meta = debug_enabled? ? build_debug_meta(next_state, updated_deepening_turn_count) : {}
 
       # Stream the response (and capture non-stream fallback result)
       response_text = @llm_client.stream_chat(
@@ -122,7 +132,10 @@ module Interview
 
       # Check if conversation is complete
       if next_state == "done"
-        @conversation.update!(finished_at: Time.current)
+        unless @conversation.finished_at.present?
+          @conversation.update!(finished_at: Time.current)
+          AnalyzeConversationJob.perform_later(@conversation.id)
+        end
       end
 
       accumulated_content
@@ -140,9 +153,9 @@ module Interview
         "debug" => {
           "state" => next_state,
           "user_turn_count" => user_turn_count,
-          "max_turns" => (@project.limits.dig("max_turns") || 12).to_i,
+          "max_turns" => max_turns_limit,
           "deepening_turn_count" => deepening_turn_count.to_i,
-          "max_deep" => (@project.limits.dig("max_deep") || 5).to_i
+          "max_deep" => max_deep_limit
         }
       }
     end
@@ -178,6 +191,23 @@ module Interview
       messages
     end
 
+    def intro_initial_question(next_state, user_message)
+      return nil unless next_state == "intro"
+      return nil unless user_message.content.to_s.strip == "[インタビュー開始]"
+
+      question = @project.initial_question.to_s.strip
+      question.present? ? question : nil
+    end
+
+    def max_turns_limit
+      limits = @project.limits.is_a?(Hash) ? @project.limits : {}
+      (limits["max_turns"] || limits[:max_turns] || 12).to_i
+    end
+
+    def max_deep_limit
+      limits = @project.limits.is_a?(Hash) ? @project.limits : {}
+      (limits["max_deep"] || limits[:max_deep] || 5).to_i
+    end
 
     def test_llm_client
       Class.new do
